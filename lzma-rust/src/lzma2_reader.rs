@@ -42,6 +42,12 @@ fn get_dict_size(dict_size: u32) -> u32 {
     dict_size + 15 & !15
 }
 
+impl<R> LZMA2Reader<R> {
+    pub fn into_inner(self) -> R {
+        self.inner
+    }
+}
+
 impl<R: Read> LZMA2Reader<R> {
     /// Create a new LZMA2 reader.
     /// `inner` is the reader to read compressed data from.
