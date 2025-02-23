@@ -296,9 +296,7 @@ impl Archive {
         while pos > min_pos {
             pos -= 1;
 
-            reader
-                .seek(SeekFrom::Start(pos))
-                .map_err(Error::io)?;
+            reader.seek(SeekFrom::Start(pos)).map_err(Error::io)?;
             let nid = read_u8(reader)?;
             if nid == K_ENCODED_HEADER || nid == K_HEADER {
                 let start_header = StartHeader {
@@ -519,10 +517,10 @@ impl Archive {
                             external
                         )));
                     }
-                    for i in 0..num_files {
-                        files[i].has_creation_date = times_defined.contains(i);
-                        if files[i].has_creation_date {
-                            files[i].creation_date = read_u64le(header)?.into();
+                    for (i, file) in files.iter_mut().enumerate() {
+                        file.has_creation_date = times_defined.contains(i);
+                        if file.has_creation_date {
+                            file.creation_date = read_u64le(header)?.into();
                         }
                     }
                 }
@@ -535,10 +533,10 @@ impl Archive {
                             external
                         )));
                     }
-                    for i in 0..num_files {
-                        files[i].has_access_date = times_defined.contains(i);
-                        if files[i].has_access_date {
-                            files[i].access_date = read_u64le(header)?.into();
+                    for (i, file) in files.iter_mut().enumerate() {
+                        file.has_access_date = times_defined.contains(i);
+                        if file.has_access_date {
+                            file.access_date = read_u64le(header)?.into();
                         }
                     }
                 }
@@ -551,10 +549,10 @@ impl Archive {
                             external
                         )));
                     }
-                    for i in 0..num_files {
-                        files[i].has_last_modified_date = times_defined.contains(i);
-                        if files[i].has_last_modified_date {
-                            files[i].last_modified_date = read_u64le(header)?.into();
+                    for (i, file) in files.iter_mut().enumerate() {
+                        file.has_last_modified_date = times_defined.contains(i);
+                        if file.has_last_modified_date {
+                            file.last_modified_date = read_u64le(header)?.into();
                         }
                     }
                 }
@@ -567,10 +565,10 @@ impl Archive {
                             external
                         )));
                     }
-                    for i in 0..num_files {
-                        files[i].has_windows_attributes = times_defined.contains(i);
-                        if files[i].has_windows_attributes {
-                            files[i].windows_attributes = read_u32(header)?;
+                    for (i, file) in files.iter_mut().enumerate() {
+                        file.has_windows_attributes = times_defined.contains(i);
+                        if file.has_windows_attributes {
+                            file.windows_attributes = read_u32(header)?;
                         }
                     }
                 }
@@ -590,8 +588,7 @@ impl Archive {
 
         let mut non_empty_file_counter = 0;
         let mut empty_file_counter = 0;
-        for i in 0..files.len() {
-            let file = &mut files[i];
+        for (i, file) in files.iter_mut().enumerate() {
             file.has_stream = is_empty_stream
                 .as_ref()
                 .map(|s| !s.contains(i))
@@ -842,9 +839,9 @@ impl Archive {
         if nid == K_CRC {
             let has_missing_crc = read_all_or_bits(header, num_digests)?;
             let mut missing_crcs = vec![0; num_digests];
-            for i in 0..num_digests {
+            for (i, missing_crc) in missing_crcs.iter_mut().enumerate() {
                 if has_missing_crc.contains(i) {
-                    missing_crcs[i] = read_u32(header)? as u64;
+                    *missing_crc = read_u32(header)? as u64;
                 }
             }
             let mut next_crc = 0;
@@ -960,8 +957,8 @@ impl Archive {
             }
             packed_streams[0] = index;
         } else {
-            for i in 0..num_packed_streams {
-                packed_streams[i] = read_u64(header)?;
+            for packed_stream in packed_streams.iter_mut() {
+                *packed_stream = read_u64(header)?;
             }
         }
         folder.packed_streams = packed_streams;
@@ -1214,8 +1211,9 @@ impl<R: Read + Seek> SevenZReader<R> {
         let offsets = &archive.stream_map.pack_stream_offsets[first_pack_stream_index..];
 
         let mut sources = Vec::with_capacity(folder.packed_streams.len());
-        for i in 0..folder.packed_streams.len() {
-            let pack_pos = start_pos + offsets[i];
+
+        for (i, offset) in offsets[..folder.packed_streams.len()].iter().enumerate() {
+            let pack_pos = start_pos + offset;
             let pack_size = archive.pack_sizes[first_pack_stream_index + i];
             let pack_reader =
                 SeekableBoundedReader::new(source.clone(), (pack_pos, pack_pos + pack_size));
@@ -1225,9 +1223,9 @@ impl<R: Read + Seek> SevenZReader<R> {
         let mut coder_to_stream_map = [usize::MAX; MAX_CODER_COUNT];
 
         let mut si = 0;
-        for i in 0..folder.coders.len() {
+        for (i, coder) in folder.coders.iter().enumerate() {
             coder_to_stream_map[i] = si;
-            si += folder.coders[i].num_in_streams as usize;
+            si += coder.num_in_streams as usize;
         }
 
         let main_coder_index = {
@@ -1236,8 +1234,8 @@ impl<R: Read + Seek> SevenZReader<R> {
                 coder_used[bp.out_index as usize] = true;
             }
             let mut mci = 0;
-            for i in 0..folder.coders.len() {
-                if !coder_used[i] {
+            for (i, used) in coder_used[..folder.coders.len()].iter().enumerate() {
+                if !used {
                     mci = i;
                     break;
                 }

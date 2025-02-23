@@ -87,9 +87,7 @@ impl<W: Write + Seek> SevenZWriter<W> {
     /// Prepares writer to write a 7z archive to
     pub fn new(mut writer: W) -> Result<Self> {
         writer
-            .seek(std::io::SeekFrom::Start(
-                SIGNATURE_HEADER_SIZE,
-            ))
+            .seek(std::io::SeekFrom::Start(SIGNATURE_HEADER_SIZE))
             .map_err(Error::io)?;
 
         Ok(Self {

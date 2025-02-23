@@ -15,6 +15,7 @@ use crate::{
     lzma::{lzma2_get_memery_usage, LZMA2Reader, LZMAReader},
 };
 
+#[allow(clippy::upper_case_acronyms)]
 pub enum Decoder<R: Read> {
     COPY(R),
     LZMA(LZMAReader<R>),

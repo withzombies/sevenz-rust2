@@ -66,7 +66,11 @@ fn decompress_lzma2_bcj_x86_file() {
     let mut expected_file = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     expected_file.push("tests/resources/decompress_x86.exe");
 
-    assert_eq!(read(file1_path).unwrap(), read(expected_file).unwrap(), "decompressed files do not match!");
+    assert_eq!(
+        read(file1_path).unwrap(),
+        read(expected_file).unwrap(),
+        "decompressed files do not match!"
+    );
 }
 
 #[test]

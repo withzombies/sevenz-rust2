@@ -1,6 +1,6 @@
 use std::{
     fs::File,
-    io::{Read},
+    io::Read,
     ops::Deref,
     path::{Path, PathBuf},
 };

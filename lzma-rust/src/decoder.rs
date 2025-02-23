@@ -205,7 +205,7 @@ impl LiteralSubdecoder {
             coder: LiteralSubcoder::new(),
         }
     }
-    
+
     pub fn decode<R: RangeSource>(
         &mut self,
         coder: &mut LZMACoder,

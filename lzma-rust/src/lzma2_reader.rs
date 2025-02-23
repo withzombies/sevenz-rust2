@@ -14,7 +14,7 @@ pub const COMPRESSED_SIZE_MAX: u32 = 1 << 16;
 /// use std::io::Read;
 /// use lzma_rust::LZMA2Reader;
 /// use lzma_rust::LZMA2Options;
-/// 
+///
 /// let compressed = [1, 0, 12, 72, 101, 108, 108, 111, 44, 32, 119, 111, 114, 108, 100, 33, 0];
 /// let mut reader = LZMA2Reader::new(compressed, LZMA2Options::DICT_SIZE_DEFAULT, None);
 /// let mut decompressed = Vec::new();

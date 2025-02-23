@@ -10,6 +10,7 @@ use crate::{
     Error,
 };
 
+#[allow(clippy::upper_case_acronyms)]
 pub enum Encoder<W: Write> {
     LZMA(LZMAWriter<W>),
     LZMA2(LZMA2Writer<W>),
