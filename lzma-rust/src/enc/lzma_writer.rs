@@ -19,7 +19,7 @@ use super::encoder::{LZMAEncoder, LZMAEncoderModes};
 /// options.dict_size = LZMA2Options::DICT_SIZE_DEFAULT;
 ///
 /// let mut w = LZMAWriter::new_no_header(CountingWriter::new(&mut out), &options, false).unwrap();
-/// w.write_all(&s).unwrap();
+/// w.write_all(s).unwrap();
 /// w.write(&[]).unwrap();
 ///
 /// ```
