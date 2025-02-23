@@ -4,7 +4,8 @@ use super::{
     range_dec::{RangeDecoder, RangeDecoderBuffer},
 };
 use byteorder::{self, BigEndian, ReadBytesExt};
-use std::io::{ErrorKind, Read, Result};
+use std::io::{ErrorKind, Read};
+
 pub const COMPRESSED_SIZE_MAX: u32 = 1 << 16;
 
 /// Decompresses a raw LZMA2 stream (no XZ headers).
@@ -13,12 +14,12 @@ pub const COMPRESSED_SIZE_MAX: u32 = 1 << 16;
 /// use std::io::Read;
 /// use lzma_rust::LZMA2Reader;
 /// use lzma_rust::LZMA2Options;
+/// 
 /// let compressed = [1, 0, 12, 72, 101, 108, 108, 111, 44, 32, 119, 111, 114, 108, 100, 33, 0];
 /// let mut reader = LZMA2Reader::new(compressed, LZMA2Options::DICT_SIZE_DEFAULT, None);
 /// let mut decompressed = Vec::new();
-/// reader.read_to_end(&mut decompressed);
+/// reader.read_to_end(&mut decompressed).unwrap();
 /// assert_eq!(&decompressed[..], b"Hello, world!");
-/// 
 /// ```
 pub struct LZMA2Reader<R> {
     inner: R,
@@ -32,6 +33,7 @@ pub struct LZMA2Reader<R> {
     end_reached: bool,
     error: Option<std::io::Error>,
 }
+
 #[inline]
 pub fn get_memery_usage(dict_size: u32) -> u32 {
     40 + COMPRESSED_SIZE_MAX / 1024 + get_dict_size(dict_size) / 1024
@@ -39,7 +41,7 @@ pub fn get_memery_usage(dict_size: u32) -> u32 {
 
 #[inline]
 fn get_dict_size(dict_size: u32) -> u32 {
-    dict_size + 15 & !15
+    (dict_size + 15) & !15
 }
 
 impl<R> LZMA2Reader<R> {
@@ -61,7 +63,7 @@ impl<R: Read> LZMA2Reader<R> {
     /// `inner` is the reader to read compressed data from.
     /// `dict_size` is the dictionary size in bytes.
     pub fn new(inner: R, dict_size: u32, preset_dict: Option<&[u8]>) -> Self {
-        let has_preset = preset_dict.as_ref().map(|a| a.len() > 0).unwrap_or(false);
+        let has_preset = preset_dict.as_ref().map(|a| !a.is_empty()).unwrap_or(false);
         let lz = LZDecoder::new(get_dict_size(dict_size) as _, preset_dict);
         let rc = RangeDecoder::new_buffer(COMPRESSED_SIZE_MAX as _);
         Self {
@@ -78,7 +80,7 @@ impl<R: Read> LZMA2Reader<R> {
         }
     }
 
-    fn decode_chunk_header(&mut self) -> Result<()> {
+    fn decode_chunk_header(&mut self) -> std::io::Result<()> {
         let control = self.inner.read_u8()?;
         if control == 0x00 {
             self.end_reached = true;
@@ -109,7 +111,9 @@ impl<R: Read> LZMA2Reader<R> {
                     "Corrupted input data (LZMA2:1)",
                 ));
             } else if control >= 0xA0 {
-                self.lzma.as_mut().map(|l| l.reset());
+                if let Some(l) = self.lzma.as_mut() {
+                    l.reset()
+                }
             }
             self.rc.prepare(&mut self.inner, compressed_size)?;
         } else if control > 0x02 {
@@ -147,8 +151,8 @@ impl<R: Read> LZMA2Reader<R> {
         Ok(())
     }
 
-    fn read_decode(&mut self, buf: &mut [u8]) -> Result<usize> {
-        if buf.len() == 0 {
+    fn read_decode(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+        if buf.is_empty() {
             return Ok(0);
         }
         if let Some(e) = &self.error {
@@ -185,13 +189,12 @@ impl<R: Read> LZMA2Reader<R> {
                 len -= copied_size;
                 size += copied_size;
                 self.uncompressed_size -= copied_size;
-                if self.uncompressed_size == 0 {
-                    if !self.rc.is_finished() || self.lz.has_pending() {
-                        return Err(std::io::Error::new(
-                            ErrorKind::InvalidInput,
-                            "rc not finished or lz has pending",
-                        ));
-                    }
+                if self.uncompressed_size == 0 && (!self.rc.is_finished() || self.lz.has_pending())
+                {
+                    return Err(std::io::Error::new(
+                        ErrorKind::InvalidInput,
+                        "rc not finished or lz has pending",
+                    ));
                 }
             }
         }
@@ -200,13 +203,13 @@ impl<R: Read> LZMA2Reader<R> {
 }
 
 impl<R: Read> Read for LZMA2Reader<R> {
-    fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
+    fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
         match self.read_decode(buf) {
             Ok(size) => Ok(size),
             Err(e) => {
                 let error = std::io::Error::new(e.kind(), e.to_string());
                 self.error = Some(e);
-                return Err(error);
+                Err(error)
             }
         }
     }

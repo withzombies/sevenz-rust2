@@ -23,6 +23,7 @@ impl Deref for LZMADecoder {
         &self.coder
     }
 }
+
 impl DerefMut for LZMADecoder {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.coder
@@ -62,7 +63,11 @@ impl LZMADecoder {
         self.reps[0] == -1
     }
 
-    pub fn decode<R: RangeSource>(&mut self, lz: &mut LZDecoder, rc: &mut RangeDecoder<R>) -> Result<()> {
+    pub fn decode<R: RangeSource>(
+        &mut self,
+        lz: &mut LZDecoder,
+        rc: &mut RangeDecoder<R>,
+    ) -> Result<()> {
         lz.repeat_pending()?;
         while lz.has_space() {
             let pos_state = lz.get_pos() as u32 & self.pos_mask;
@@ -85,7 +90,11 @@ impl LZMADecoder {
         Ok(())
     }
 
-    fn decode_match<R: RangeSource>(&mut self, pos_state: u32, rc: &mut RangeDecoder<R>) -> Result<u32> {
+    fn decode_match<R: RangeSource>(
+        &mut self,
+        pos_state: u32,
+        rc: &mut RangeDecoder<R>,
+    ) -> Result<u32> {
         self.state.update_match();
         self.reps[3] = self.reps[2];
         self.reps[2] = self.reps[1];
@@ -104,7 +113,7 @@ impl LZMADecoder {
                 self.reps[0] |= rc.decode_reverse_bit_tree(probs)?;
             } else {
                 let r0 = rc.decode_direct_bits(limit as u32 - ALIGN_BITS as u32)? << ALIGN_BITS;
-                self.reps[0] = self.reps[0] | r0;
+                self.reps[0] |= r0;
                 self.reps[0] |= rc.decode_reverse_bit_tree(&mut self.dist_align)?;
             }
         }
@@ -148,6 +157,7 @@ impl LZMADecoder {
             .map(|i| i as u32)
     }
 }
+
 pub struct LiteralDecoder {
     coder: LiteralCoder,
     sub_decoders: Vec<LiteralSubdecoder>,
@@ -195,6 +205,7 @@ impl LiteralSubdecoder {
             coder: LiteralSubcoder::new(),
         }
     }
+    
     pub fn decode<R: RangeSource>(
         &mut self,
         coder: &mut LZMACoder,
@@ -219,7 +230,7 @@ impl LiteralSubdecoder {
             let mut bit;
 
             loop {
-                match_byte = match_byte << 1;
+                match_byte <<= 1;
                 match_bit = match_byte & offset;
                 bit = rc
                     .decode_bit(&mut self.coder.probs[(offset + match_bit + symbol) as usize])?
@@ -238,7 +249,11 @@ impl LiteralSubdecoder {
 }
 
 impl LengthCoder {
-    fn decode<R: RangeSource>(&mut self, pos_state: usize, rc: &mut RangeDecoder<R>) -> Result<i32> {
+    fn decode<R: RangeSource>(
+        &mut self,
+        pos_state: usize,
+        rc: &mut RangeDecoder<R>,
+    ) -> Result<i32> {
         if rc.decode_bit(&mut self.choice[0])? == 0 {
             return Ok(rc
                 .decode_bit_tree(&mut self.low[pos_state])?

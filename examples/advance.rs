@@ -33,7 +33,7 @@ fn main() {
     #[cfg(feature = "aes256")]
     {
         sz.set_content_methods(vec![
-            sevenz_rust::AesEncoderOptions::new("sevenz-rust".into()).into(),
+            AesEncoderOptions::new("sevenz-rust".into()).into(),
             LZMA2Options::with_preset(9).into(),
         ]);
         // sz.set_encrypt_header(true);
@@ -71,7 +71,7 @@ fn gen_random_contents(len: usize) -> String {
     let mut s = String::with_capacity(len);
     let mut rng = rand::thread_rng();
     for _ in 0..len {
-        let ch = rng.gen_range('A'..'Z');
+        let ch = rng.gen_range('A'..='Z');
         s.push(ch);
     }
     s

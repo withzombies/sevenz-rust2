@@ -121,8 +121,8 @@ fn get_aes_key(properties: &[u8], password: &[u8]) -> Result<([u8; 32], [u8; 16]
     let b0 = properties[0];
     let num_cycles_power = b0 & 63;
     let b1 = properties[1];
-    let iv_size = ((b0 >> 6 & 1) + (b1 & 15)) as usize;
-    let salt_size = ((b0 >> 7 & 1) + (b1 >> 4)) as usize;
+    let iv_size = (((b0 >> 6) & 1) + (b1 & 15)) as usize;
+    let salt_size = (((b0 >> 7) & 1) + (b1 >> 4)) as usize;
     if 2 + salt_size + iv_size > properties.len() {
         return Err(crate::Error::other("Salt size + IV size too long"));
     }
@@ -172,11 +172,7 @@ impl Cipher {
         })
     }
 
-    fn update<W: std::io::Write>(
-        &mut self,
-        mut data: &mut [u8],
-        mut output: W,
-    ) -> std::io::Result<usize> {
+    fn update<W: Write>(&mut self, mut data: &mut [u8], mut output: W) -> std::io::Result<usize> {
         let mut n = 0;
         if !self.buf.is_empty() {
             assert!(self.buf.len() < 16);
@@ -319,15 +315,10 @@ mod enc {
                     let mut block = [0u8; 16];
                     block[0..buffer.len()].copy_from_slice(buffer);
                     block[buffer.len()..16].copy_from_slice(&buf[..end]);
-                    // let block2 = GenericArray::from_mut_slice(&mut block);
-                    // self.enc.encrypt_block_mut(block2);
-                    // self.output.write_all(&block)?;
-                    // self.write_size += block.len() as _;
                     self.write_block(&mut block)?;
                     self.buffer.clear();
                     buf = &buf[end..];
                 } else {
-                    // self.buffer.drain(..start);
                     self.buffer.extend_from_slice(buf);
                     return Ok(len);
                 }
@@ -363,17 +354,18 @@ mod enc {
 mod tests {
     use super::*;
 
+    #[allow(clippy::unused_io_amount)]
     #[cfg(feature = "compress")]
     #[test]
     fn test_aes_codec() {
         let mut encoded = vec![];
-        let mut writer = CountingWriter::new(&mut encoded);
+        let writer = CountingWriter::new(&mut encoded);
         let pwd: Password = "1234".into();
         let options = AesEncoderOptions::new(pwd.clone());
         let mut enc = Aes256Sha256Encoder::new(writer, &options).unwrap();
         let original = include_bytes!("./aes256sha256.rs");
         enc.write_all(original).expect("encode data");
-        enc.write(&[]);
+        enc.write(&[]).unwrap();
 
         let mut encoded_data = &encoded[..];
         let mut dec =
@@ -381,7 +373,7 @@ mod tests {
                 .unwrap();
 
         let mut decoded = vec![];
-        std::io::copy(&mut dec, &mut decoded);
+        std::io::copy(&mut dec, &mut decoded).unwrap();
         assert_eq!(&decoded[..original.len()], &original[..]);
     }
 }

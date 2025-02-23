@@ -30,7 +30,7 @@ pub fn compress_encypted<W: Write + Seek>(
     let mut z = SevenZWriter::new(dest)?;
     if !password.is_empty() {
         z.set_content_methods(vec![
-            aes256sha256::AesEncoderOptions::new(password).into(),
+            AesEncoderOptions::new(password).into(),
             SevenZMethod::LZMA2.into(),
         ]);
     }
@@ -127,7 +127,7 @@ impl<W: Write + Seek> SevenZWriter<W> {
         &mut self,
         path: impl AsRef<Path>,
         filter: impl Fn(&Path) -> bool,
-    ) -> Result<&mut Self, crate::Error> {
+    ) -> Result<&mut Self, Error> {
         encode_path(true, &path, self, filter)?;
         Ok(self)
     }
@@ -139,7 +139,7 @@ impl<W: Write + Seek> SevenZWriter<W> {
         &mut self,
         path: impl AsRef<Path>,
         filter: impl Fn(&Path) -> bool,
-    ) -> Result<&mut Self, crate::Error> {
+    ) -> Result<&mut Self, Error> {
         encode_path(false, &path, self, filter)?;
         Ok(self)
     }
@@ -174,11 +174,11 @@ fn encode_path<W: Write + Seek>(
     src: impl AsRef<Path>,
     zip: &mut SevenZWriter<W>,
     filter: impl Fn(&Path) -> bool,
-) -> Result<(), crate::Error> {
+) -> Result<(), Error> {
     let mut entries = Vec::new();
     let mut paths = Vec::new();
     collect_file_paths(&src, &mut paths, &filter).map_err(|e| {
-        crate::Error::io_msg(
+        Error::io_msg(
             e,
             format!("Failed to collect entries from path:{:?}", src.as_ref()),
         )
@@ -192,7 +192,7 @@ fn encode_path<W: Write + Seek>(
                 .to_string();
             zip.push_archive_entry(
                 SevenZArchiveEntry::from_path(ele.as_path(), name),
-                Some(File::open(ele.as_path()).map_err(crate::Error::io)?),
+                Some(File::open(ele.as_path()).map_err(Error::io)?),
             )?;
         }
         return Ok(());
@@ -209,7 +209,7 @@ fn encode_path<W: Write + Seek>(
         if size >= MAX_BLOCK_SIZE {
             zip.push_archive_entry(
                 SevenZArchiveEntry::from_path(ele.as_path(), name),
-                Some(File::open(ele.as_path()).map_err(crate::Error::io)?),
+                Some(File::open(ele.as_path()).map_err(Error::io)?),
             )?;
             continue;
         }

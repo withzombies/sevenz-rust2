@@ -1,4 +1,4 @@
-use std::io::{Error, ErrorKind, Read, Result};
+use std::io::{Error, ErrorKind, Read};
 
 use byteorder::{LittleEndian, ReadBytesExt};
 
@@ -7,7 +7,7 @@ use super::lz::LZDecoder;
 use super::range_dec::RangeDecoder;
 use super::*;
 
-pub fn get_memery_usage_by_props(dict_size: u32, props_byte: u8) -> Result<u32> {
+pub fn get_memery_usage_by_props(dict_size: u32, props_byte: u8) -> std::io::Result<u32> {
     if dict_size > DICT_SIZE_MAX {
         return Err(Error::new(ErrorKind::InvalidInput, "dict size too large"));
     }
@@ -19,14 +19,15 @@ pub fn get_memery_usage_by_props(dict_size: u32, props_byte: u8) -> Result<u32> 
     let lc = props - lp * 9;
     get_memery_usage(dict_size, lc as u32, lp as u32)
 }
-pub fn get_memery_usage(dict_size: u32, lc: u32, lp: u32) -> Result<u32> {
+
+pub fn get_memery_usage(dict_size: u32, lc: u32, lp: u32) -> std::io::Result<u32> {
     if lc > 8 || lp > 4 {
         return Err(Error::new(ErrorKind::InvalidInput, "Invalid lc or lp"));
     }
-    return Ok(10 + get_dict_size(dict_size)? / 1024 + ((2 * 0x300) << (lc + lp)) / 1024);
+    Ok(10 + get_dict_size(dict_size)? / 1024 + ((2 * 0x300) << (lc + lp)) / 1024)
 }
 
-fn get_dict_size(dict_size: u32) -> Result<u32> {
+fn get_dict_size(dict_size: u32) -> std::io::Result<u32> {
     if dict_size > DICT_SIZE_MAX {
         return Err(Error::new(ErrorKind::InvalidInput, "dict size too large"));
     }
@@ -60,12 +61,6 @@ pub struct LZMAReader<R> {
     remaining_size: u64,
 }
 
-impl<R> Drop for LZMAReader<R> {
-    fn drop(&mut self) {
-        // self.reader.clone().release();
-    }
-}
-
 impl<R: Read> LZMAReader<R> {
     fn construct1(
         reader: R,
@@ -73,7 +68,7 @@ impl<R: Read> LZMAReader<R> {
         mut props: u8,
         dict_size: u32,
         preset_dict: Option<&[u8]>,
-    ) -> Result<Self> {
+    ) -> std::io::Result<Self> {
         if props > (4 * 5 + 4) * 9 + 8 {
             return Err(Error::new(ErrorKind::InvalidInput, "Invalid props byte"));
         }
@@ -103,7 +98,7 @@ impl<R: Read> LZMAReader<R> {
         pb: u32,
         dict_size: u32,
         preset_dict: Option<&[u8]>,
-    ) -> Result<Self> {
+    ) -> std::io::Result<Self> {
         if lc > 8 || lp > 4 || pb > 4 {
             return Err(Error::new(
                 ErrorKind::InvalidInput,
@@ -134,7 +129,6 @@ impl<R: Read> LZMAReader<R> {
         })
     }
 
-    ///
     /// Creates a new .lzma file format decompressor with an optional memory usage limit.
     /// - [mem_limit_kb] - memory usage limit in kibibytes (KiB). u32::MAX means no limit.
     /// - [preset_dict] - preset dictionary or None to use no preset dictionary.
@@ -142,7 +136,7 @@ impl<R: Read> LZMAReader<R> {
         mut reader: R,
         mem_limit_kb: u32,
         preset_dict: Option<&[u8]>,
-    ) -> Result<Self> {
+    ) -> std::io::Result<Self> {
         let props = reader.read_u8()?;
         let dict_size = reader.read_u32::<LittleEndian>()?;
 
@@ -172,7 +166,7 @@ impl<R: Read> LZMAReader<R> {
         props: u8,
         dict_size: u32,
         preset_dict: Option<&[u8]>,
-    ) -> Result<Self> {
+    ) -> std::io::Result<Self> {
         Self::construct1(reader, uncomp_size, props, dict_size, preset_dict)
     }
 
@@ -192,11 +186,11 @@ impl<R: Read> LZMAReader<R> {
         pb: u32,
         dict_size: u32,
         preset_dict: Option<&[u8]>,
-    ) -> Result<Self> {
+    ) -> std::io::Result<Self> {
         Self::construct2(reader, uncomp_size, lc, lp, pb, dict_size, preset_dict)
     }
 
-    fn read_decode(&mut self, buf: &mut [u8]) -> Result<usize> {
+    fn read_decode(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
         if buf.is_empty() {
             return Ok(0);
         }
@@ -207,7 +201,7 @@ impl<R: Read> LZMAReader<R> {
         let mut len = buf.len() as u32;
         let mut off = 0u32;
         while len > 0 {
-            let mut copy_size_max = len as u32;
+            let mut copy_size_max = len;
             if self.remaining_size <= u64::MAX / 2 && (self.remaining_size as u32) < len {
                 copy_size_max = self.remaining_size as u32;
             }
@@ -252,7 +246,7 @@ impl<R: Read> LZMAReader<R> {
 }
 
 impl<R: Read> Read for LZMAReader<R> {
-    fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
+    fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
         self.read_decode(buf)
     }
 }

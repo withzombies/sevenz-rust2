@@ -76,7 +76,7 @@ pub fn add_decoder<I: Read>(
         SevenZMethod::ID_COPY => Ok(Decoder::COPY(input)),
         #[cfg(feature = "zstd")]
         SevenZMethod::ID_ZSTD => {
-            let zs = zstd::Decoder::new(input).unwrap();
+            let zs = zstd::Decoder::new(input)?;
             Ok(Decoder::ZSTD(zs))
         }
         SevenZMethod::ID_LZMA => {

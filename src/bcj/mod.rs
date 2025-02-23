@@ -111,7 +111,7 @@ impl<R: Read> Read for SimpleReader<R> {
                 return Ok(if size > 0 { size } else { 0 });
             }
 
-            assert!(state.filtered == 0);
+            assert_eq!(state.filtered, 0);
             // Get more data into the temporary buffer.
             let mut in_size = FILTER_BUF_SIZE - (state.pos + state.filtered + state.unfiltered);
             let start = state.pos + state.filtered + state.unfiltered;

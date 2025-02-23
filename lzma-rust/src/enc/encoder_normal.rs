@@ -1,6 +1,6 @@
 use super::{
     encoder::{LZMAEncoder, LZMAEncoderTrait},
-    lz::{LZEncoder, MFType, },
+    lz::{LZEncoder, MFType},
     state::State,
     MATCH_LEN_MAX, MATCH_LEN_MIN, REPS,
 };
@@ -59,14 +59,14 @@ impl NormalEncoderMode {
             self.opts[opt_prev].opt_prev = self.opt_cur;
             self.opt_cur = opt_prev;
             opt_prev = temp;
-            if self.opt_cur <= 0 {
+            if self.opt_cur == 0 {
                 break;
             }
         }
 
         self.opt_cur = self.opts[0].opt_prev;
         encoder.data.back = self.opts[self.opt_cur].back_prev;
-        return self.opt_cur;
+        self.opt_cur
     }
 
     fn update_opt_state_and_reps(&mut self) {
@@ -239,7 +239,7 @@ impl NormalEncoderMode {
         for rep in 0..REPS {
             let len = encoder
                 .lz
-                .get_match_len(self.opts[self.opt_cur].reps[rep], len_limit as i32);
+                .get_match_len(self.opts[self.opt_cur].reps[rep], len_limit);
             if len < MATCH_LEN_MIN {
                 continue;
             }
@@ -316,7 +316,7 @@ impl NormalEncoderMode {
             }
         }
 
-        return start_len;
+        start_len
     }
 
     fn calc_normal_match_prices(
@@ -425,7 +425,7 @@ impl NormalEncoderMode {
 }
 
 impl LZMAEncoderTrait for NormalEncoderMode {
-    fn get_next_symbol(&mut self, encoder: &mut super::encoder::LZMAEncoder) -> u32 {
+    fn get_next_symbol(&mut self, encoder: &mut LZMAEncoder) -> u32 {
         // If there are pending symbols from an earlier call to this
         // function, return those symbols first.
         let pos = encoder.lz.get_pos();
@@ -534,8 +534,8 @@ impl LZMAEncoderTrait for NormalEncoderMode {
         }
 
         // Return if there is neither normal nor long repeated match. Use
-        // a short match instead of a literal if is is possible and cheaper.
-        self.opt_end = usize::max(main_len as usize, rep_lens[rep_best] as usize);
+        // a short match instead of a literal if it is possible and cheaper.
+        self.opt_end = usize::max(main_len, rep_lens[rep_best] as usize);
         if self.opt_end < MATCH_LEN_MIN {
             assert_eq!(self.opt_end, 0);
             encoder.data.back = self.opts[1].back_prev;
@@ -565,8 +565,7 @@ impl LZMAEncoderTrait for NormalEncoderMode {
         }
 
         // Calculate the prices of repeated matches of all lengths.
-        for rep in 0..REPS {
-            let rep_len = rep_lens[rep];
+        for (rep, &rep_len) in rep_lens.iter().enumerate() {
             if rep_len < MATCH_LEN_MIN as i32 {
                 continue;
             }
@@ -636,8 +635,7 @@ impl LZMAEncoderTrait for NormalEncoderMode {
             encoder.find_matches();
             let matches = encoder.lz.matches();
             if matches.count > 0
-                && matches.len[matches.count as usize - 1]
-                    >= encoder.data.nice_len as u32
+                && matches.len[matches.count as usize - 1] >= encoder.data.nice_len as u32
             {
                 break;
             }
@@ -670,7 +668,7 @@ impl LZMAEncoderTrait for NormalEncoderMode {
             }
         }
 
-        return self.convert_opts(encoder) as _;
+        self.convert_opts(encoder) as _
     }
 
     fn reset(&mut self) {

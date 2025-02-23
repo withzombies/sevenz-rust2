@@ -5,17 +5,19 @@ use byteorder::WriteBytesExt;
 use super::{range_enc::RangeEncoder, CountingWriter, LZMA2Options};
 
 use super::encoder::{LZMAEncoder, LZMAEncoderModes};
+
 /// Compresses into the legacy .lzma file format or into a raw LZMA stream
 ///
 /// # Examples
 /// ```
 /// use std::io::Write;
-/// use lzma_rust::{LZMA2Options, LZMAWriter};
+/// use lzma_rust::{CountingWriter, LZMA2Options, LZMAWriter};
+///
 /// let s = b"Hello, world!";
 /// let mut out = Vec::new();
 /// let mut options = LZMA2Options::with_preset(6);
 /// options.dict_size = LZMA2Options::DICT_SIZE_DEFAULT;
-
+///
 /// let mut w = LZMAWriter::new_no_header(CountingWriter::new(&mut out), &options, false).unwrap();
 /// w.write_all(&s).unwrap();
 /// w.write(&[]).unwrap();
@@ -146,7 +148,7 @@ impl<W: Write> Write for LZMAWriter<W> {
                 "Already finished",
             ));
         }
-        if buf.len() == 0 {
+        if buf.is_empty() {
             self.finish()?;
             self.rc.inner().write(buf)?;
             return Ok(0);

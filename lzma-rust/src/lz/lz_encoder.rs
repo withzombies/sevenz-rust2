@@ -1,7 +1,4 @@
-use std::{
-    io::{Result, Write},
-    ops::Deref,
-};
+use std::{io::Write, ops::Deref};
 
 use super::{bt4::BT4, hc4::HC4};
 
@@ -9,6 +6,7 @@ pub trait MatchFind {
     fn find_matches(&mut self, encoder: &mut LZEncoderData, matches: &mut Matches);
     fn skip(&mut self, encoder: &mut LZEncoderData, len: usize);
 }
+
 pub enum MatchFinders {
     HC4(HC4),
     BT4(BT4),
@@ -29,6 +27,7 @@ impl MatchFind for MatchFinders {
         }
     }
 }
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum MFType {
     HC4,
@@ -49,6 +48,7 @@ impl MFType {
         }
     }
 }
+
 pub struct LZEncoder {
     pub(crate) data: LZEncoderData,
     pub(crate) matches: Matches,
@@ -74,6 +74,7 @@ pub struct Matches {
     pub dist: Vec<i32>,
     pub count: u32,
 }
+
 impl Matches {
     pub fn new(count_max: usize) -> Self {
         Self {
@@ -92,14 +93,12 @@ impl LZEncoder {
         match_len_max: u32,
         mf: MFType,
     ) -> u32 {
-        let m = get_buf_size(
+        get_buf_size(
             dict_size,
             extra_size_before,
             extra_size_after,
             match_len_max,
-        ) + mf.get_memery_usage(dict_size);
-
-        m
+        ) + mf.get_memery_usage(dict_size)
     }
 
     pub fn new_hc4(
@@ -137,6 +136,7 @@ impl LZEncoder {
             MatchFinders::BT4(BT4::new(dict_size, nice_len, depth_limit)),
         )
     }
+
     fn new(
         dict_size: u32,
         extra_size_before: u32,
@@ -179,7 +179,7 @@ impl LZEncoder {
             if *p <= norm_offset {
                 *p = 0;
             } else {
-                *p = *p - norm_offset;
+                *p -= norm_offset;
             }
         }
     }
@@ -205,9 +205,11 @@ impl LZEncoder {
     pub fn set_finishing(&mut self) {
         self.data.set_finishing(&mut self.match_finder)
     }
+
     pub fn fill_window(&mut self, input: &[u8]) -> usize {
         self.data.fill_window(input, &mut self.match_finder)
     }
+
     pub fn set_flushing(&mut self) {
         self.data.set_flushing(&mut self.match_finder)
     }
@@ -222,9 +224,10 @@ impl LZEncoderData {
         self.read_pos != -1
     }
 
-    pub(super) fn buf_mut(&mut self) -> &mut [u8] {
-        &mut self.buf[self.read_pos as usize..]
+    pub(super) fn buf(&mut self) -> &[u8] {
+        &self.buf[self.read_pos as usize..]
     }
+
     fn set_preset_dict(
         &mut self,
         dict_size: u32,
@@ -232,7 +235,7 @@ impl LZEncoderData {
         match_finder: &mut dyn MatchFind,
     ) {
         assert!(!self.is_started());
-        assert!(self.write_pos == 0);
+        assert_eq!(self.write_pos, 0);
         let copy_size = preset_dict.len().min(dict_size as usize);
         let offset = preset_dict.len() - copy_size;
         self.buf[0..copy_size].copy_from_slice(&preset_dict[offset..(offset + copy_size)]);
@@ -242,7 +245,7 @@ impl LZEncoderData {
 
     fn move_window(&mut self) {
         let move_offset = (self.read_pos + 1 - self.keep_size_before as i32) & !15;
-        let move_size = self.write_pos as i32 - move_offset;
+        let move_size = self.write_pos - move_offset;
         assert!(move_size >= 0);
         assert!(move_offset >= 0);
         let move_size = move_size as usize;
@@ -295,6 +298,7 @@ impl LZEncoderData {
         self.read_limit = self.write_pos - 1;
         self.process_pending_bytes(match_finder);
     }
+
     fn set_finishing(&mut self, match_finder: &mut dyn MatchFind) {
         self.read_limit = self.write_pos - 1;
         self.finishing = true;
@@ -304,12 +308,13 @@ impl LZEncoderData {
     pub fn has_enough_data(&self, already_read_len: i32) -> bool {
         self.read_pos - already_read_len < self.read_limit
     }
+
     pub fn copy_uncompressed<W: Write>(
         &self,
         out: &mut W,
         backward: i32,
         len: usize,
-    ) -> Result<()> {
+    ) -> std::io::Result<()> {
         let start = (self.read_pos + 1 - backward) as usize;
         out.write_all(&self.buf[start..(start + len)])
     }
@@ -359,13 +364,13 @@ impl LZEncoderData {
         {
             len += 1;
         }
-        return len as _;
+        len as _
     }
 
     fn verify_matches(&self, matches: &Matches) -> bool {
         let len_limit = self.get_avail().min(self.match_len_max as i32);
         for i in 0..matches.count as usize {
-            if self.get_match_len(matches.dist[i] as i32, len_limit) != matches.len[i] as _ {
+            if self.get_match_len(matches.dist[i], len_limit) != matches.len[i] as _ {
                 return false;
             }
         }
@@ -380,11 +385,9 @@ impl LZEncoderData {
         assert!(required_for_flushing >= required_for_finishing);
         self.read_pos += 1;
         let mut avail = self.write_pos - self.read_pos;
-        if avail < required_for_flushing {
-            if avail < required_for_finishing || !self.finishing {
-                self.pending_size += 1;
-                avail = 0;
-            }
+        if avail < required_for_flushing && (avail < required_for_finishing || !self.finishing) {
+            self.pending_size += 1;
+            avail = 0;
         }
         avail
     }

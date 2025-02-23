@@ -1,7 +1,6 @@
 use std::{
     fs::File,
     io::{ErrorKind, Read, Seek, SeekFrom},
-    path::Path,
 };
 
 use bit_set::BitSet;
@@ -10,8 +9,6 @@ use crc::Crc;
 use crate::{archive::*, decoders::add_decoder, error::Error, folder::*, password::Password};
 pub(crate) const CRC32: Crc<u32> = Crc::<u32>::new(&crc::CRC_32_ISO_HDLC);
 const MAX_MEM_LIMIT_KB: usize = usize::MAX / 1024;
-
-pub(crate) trait SeedRead: Read + Seek {}
 
 pub struct BoundedReader<R: Read> {
     inner: R,
@@ -58,8 +55,6 @@ pub struct SeekableBoundedReader<R: Read + Seek> {
     cur: u64,
     bounds: (u64, u64),
 }
-
-impl<R: Read + Seek> SeedRead for SeekableBoundedReader<R> {}
 
 impl<R: Read + Seek> Seek for SeekableBoundedReader<R> {
     fn seek(&mut self, pos: SeekFrom) -> std::io::Result<u64> {
@@ -149,17 +144,17 @@ impl<R: Read> Read for Crc32VerifyingReader<R> {
 impl Archive {
     /// Open 7z file under specified `path`.
     #[inline]
-    pub fn open(path: impl AsRef<Path>) -> Result<Archive, Error> {
+    pub fn open(path: impl AsRef<std::path::Path>) -> Result<Archive, Error> {
         Self::open_with_password(path, &Password::empty())
     }
 
     /// Open an encrypted 7z file under specified `path` with  `password`.
     #[inline]
     pub fn open_with_password(
-        path: impl AsRef<Path>,
+        path: impl AsRef<std::path::Path>,
         password: &Password,
     ) -> Result<Archive, Error> {
-        let mut file = std::fs::File::open(path)?;
+        let mut file = File::open(path)?;
         let len = file.metadata()?.len();
         Self::read(&mut file, len, password.as_ref())
     }
@@ -211,7 +206,7 @@ impl Archive {
             let mut buf = [0; 20];
             reader.read_exact(&mut buf).map_err(Error::io)?;
             reader
-                .seek(std::io::SeekFrom::Start(current_position))
+                .seek(SeekFrom::Start(current_position))
                 .map_err(Error::io)?;
             buf.iter().any(|a| *a != 0)
         } else {
@@ -302,7 +297,7 @@ impl Archive {
             pos -= 1;
 
             reader
-                .seek(std::io::SeekFrom::Start(pos))
+                .seek(SeekFrom::Start(pos))
                 .map_err(Error::io)?;
             let nid = read_u8(reader)?;
             if nid == K_ENCODED_HEADER || nid == K_HEADER {
@@ -410,7 +405,7 @@ impl Archive {
                         "Multi input/output stream coders are not yet supported",
                     ));
                 }
-                let next = crate::decoders::add_decoder(
+                let next = add_decoder(
                     decoder,
                     folder.get_unpack_size_at_index(index) as usize,
                     coder,
@@ -1078,7 +1073,7 @@ impl<'a, R: Read> NamesReader<'a, R> {
     }
 }
 
-impl<'a, R: Read> Iterator for NamesReader<'a, R> {
+impl<R: Read> Iterator for NamesReader<'_, R> {
     type Item = Result<String, Error>;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -1114,7 +1109,7 @@ pub struct SevenZReader<R: Read + Seek> {
 impl SevenZReader<File> {
     #[inline]
     pub fn open(path: impl AsRef<std::path::Path>, password: Password) -> Result<Self, Error> {
-        let file = std::fs::File::open(path.as_ref())
+        let file = File::open(path.as_ref())
             .map_err(|e| Error::file_open(e, path.as_ref().to_string_lossy().to_string()))?;
         let len = file.metadata().map(|m| m.len()).map_err(Error::io)?;
         Self::new(file, len, password)
@@ -1176,7 +1171,7 @@ impl<R: Read + Seek> SevenZReader<R> {
                     "Multi input/output stream coders are not yet supported",
                 ));
             }
-            let next = crate::decoders::add_decoder(
+            let next = add_decoder(
                 decoder,
                 folder.get_unpack_size_at_index(index) as usize,
                 coder,

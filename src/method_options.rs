@@ -9,7 +9,7 @@ use std::fmt::Debug;
 pub enum MethodOptions {
     Num(u32),
     #[cfg(feature = "compress")]
-    LZMA2(crate::lzma::LZMA2Options),
+    LZMA2(LZMA2Options),
     #[cfg(feature = "aes256")]
     Aes(AesEncoderOptions),
 }
@@ -41,8 +41,8 @@ impl From<u32> for MethodOptions {
 }
 
 #[cfg(feature = "compress")]
-impl From<crate::lzma::LZMA2Options> for MethodOptions {
-    fn from(o: crate::lzma::LZMA2Options) -> Self {
+impl From<LZMA2Options> for MethodOptions {
+    fn from(o: LZMA2Options) -> Self {
         Self::LZMA2(o)
     }
 }

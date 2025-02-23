@@ -90,7 +90,7 @@ impl LZDecoder {
         let back = if self.pos < dist + 1 {
             // The distance wraps around to the end of the cyclic dictionary
             // buffer. We cannot get here if the dictionary isn't full.
-            assert!(self.full == self.buf_size);
+            assert_eq!(self.full, self.buf_size);
             let mut back = self.buf_size + self.pos - dist - 1;
 
             // Here we will never copy more than dist + 1 bytes and

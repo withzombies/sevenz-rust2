@@ -61,7 +61,7 @@ macro_rules! write_times {
     };
 }
 
-type Result<T> = std::result::Result<T, crate::Error>;
+type Result<T> = std::result::Result<T, Error>;
 
 /// Writes a 7z file
 pub struct SevenZWriter<W: Write> {
@@ -77,17 +77,18 @@ pub struct SevenZWriter<W: Write> {
 impl SevenZWriter<File> {
     /// Creates a file to write a 7z archive to
     pub fn create(path: impl AsRef<Path>) -> Result<Self> {
-        let file = std::fs::File::create(path.as_ref())
-            .map_err(|e| crate::Error::file_open(e, path.as_ref().to_string_lossy().to_string()))?;
+        let file = File::create(path.as_ref())
+            .map_err(|e| Error::file_open(e, path.as_ref().to_string_lossy().to_string()))?;
         Self::new(file)
     }
 }
+
 impl<W: Write + Seek> SevenZWriter<W> {
     /// Prepares writer to write a 7z archive to
     pub fn new(mut writer: W) -> Result<Self> {
         writer
             .seek(std::io::SeekFrom::Start(
-                crate::archive::SIGNATURE_HEADER_SIZE,
+                SIGNATURE_HEADER_SIZE,
             ))
             .map_err(Error::io)?;
 
@@ -241,6 +242,7 @@ impl<W: Write + Seek> SevenZWriter<W> {
 
     /// [Solid compression](https://en.wikipedia.org/wiki/Solid_compression)
     /// pack [entries] into one pack
+    ///
     /// # Panics
     /// Panics if `entries`'s length not equals to `reader.reader_len()`
     pub fn push_archive_entries<R: Read>(
@@ -514,6 +516,7 @@ impl<W: Write + Seek> SevenZWriter<W> {
         }
         Ok(())
     }
+
     fn write_file_empty_files<H: Write>(&self, header: &mut H) -> std::io::Result<()> {
         let mut has_empty = false;
         let mut empty_stream_counter = 0;
@@ -563,6 +566,7 @@ impl<W: Write + Seek> SevenZWriter<W> {
         }
         Ok(())
     }
+
     fn write_file_names<H: Write>(&self, header: &mut H) -> std::io::Result<()> {
         header.write_u8(K_NAME)?;
         let mut temp: Vec<u8> = Vec::with_capacity(128);
@@ -649,23 +653,24 @@ struct CompressWrapWriter<'a, W> {
     cache: Vec<u8>,
     bytes_written: &'a mut usize,
 }
+
 impl<'a, W: Write> CompressWrapWriter<'a, W> {
     pub fn new(writer: W, bytes_written: &'a mut usize) -> Self {
         Self {
             writer,
-            crc: crate::reader::CRC32.digest(),
+            crc: CRC32.digest(),
             cache: Vec::with_capacity(8192),
             bytes_written,
         }
     }
 
     pub fn crc_value(&mut self) -> u32 {
-        let crc = std::mem::replace(&mut self.crc, crate::reader::CRC32.digest());
+        let crc = std::mem::replace(&mut self.crc, CRC32.digest());
         crc.finalize()
     }
 }
 
-impl<'a, W: Write> Write for CompressWrapWriter<'a, W> {
+impl<W: Write> Write for CompressWrapWriter<'_, W> {
     fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
         self.cache.resize(buf.len(), Default::default());
         let len = self.writer.write(buf)?;

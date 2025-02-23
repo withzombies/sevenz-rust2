@@ -29,6 +29,7 @@ impl Default for LZMA2Options {
         Self::with_preset(6)
     }
 }
+
 impl LZMA2Options {
     pub const LC_DEFAULT: u32 = 3;
     pub const LP_DEFAULT: u32 = 0;
@@ -49,6 +50,8 @@ impl LZMA2Options {
         1 << 26,
     ];
     const PRESET_TO_DEPTH_LIMIT: &'static [i32] = &[4, 8, 24, 48];
+
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         dict_size: u32,
         lc: u32,
@@ -129,21 +132,24 @@ impl LZMA2Options {
         ((self.pb * 5 + self.lp) * 9 + self.lc) as u8
     }
 }
+
 const COMPRESSED_SIZE_MAX: u32 = 64 << 10;
+
 pub fn get_extra_size_before(dict_size: u32) -> u32 {
-    return if COMPRESSED_SIZE_MAX > dict_size {
+    if COMPRESSED_SIZE_MAX > dict_size {
         COMPRESSED_SIZE_MAX - dict_size
     } else {
         0
-    };
+    }
 }
 
 /// LZMA2 format writer
 /// # Examples
 /// ```
 /// use std::io::Write;
-/// use lzma_rust::enc::lzma2_writer::{LZMA2Options, LZMA2Writer};
-/// let mut writer = LZMA2Writer::new(Vec::new(), &LZMA2Options::default());
+/// use lzma_rust::{LZMA2Options, LZMA2Writer, CountingWriter};
+///
+/// let mut writer = LZMA2Writer::new(CountingWriter::new(Vec::new()), &LZMA2Options::default());
 ///    writer.write_all(b"hello world").unwrap();
 ///    let compressed = writer.finish().unwrap();
 ///
@@ -203,14 +209,12 @@ impl<W: Write> LZMA2Writer<W> {
             } else {
                 0x80 + (2 << 5)
             }
+        } else if self.state_reset_needed {
+            0x80 + (1 << 5)
         } else {
-            if self.state_reset_needed {
-                0x80 + (1 << 5)
-            } else {
-                0x80
-            }
+            0x80
         };
-        control = control | (uncompressed_size - 1) >> 16;
+        control |= (uncompressed_size - 1) >> 16;
         let mut chunk_header = [0u8; 6];
         chunk_header[0] = control as u8;
         chunk_header[1] = ((uncompressed_size - 1) >> 8) as u8;
@@ -218,7 +222,7 @@ impl<W: Write> LZMA2Writer<W> {
         chunk_header[3] = ((compressed_size - 1) >> 8) as u8;
         chunk_header[4] = (compressed_size - 1) as u8;
         if self.props_needed {
-            chunk_header[5] = self.props as u8;
+            chunk_header[5] = self.props;
             self.inner.write_all(&chunk_header)?;
         } else {
             self.inner.write_all(&chunk_header[..5])?;
@@ -233,7 +237,7 @@ impl<W: Write> LZMA2Writer<W> {
 
     fn write_uncompressed(&mut self, mut uncompressed_size: u32) -> std::io::Result<()> {
         while uncompressed_size > 0 {
-            let chunk_size = uncompressed_size.min(COMPRESSED_SIZE_MAX as u32);
+            let chunk_size = uncompressed_size.min(COMPRESSED_SIZE_MAX);
             let mut chunk_header = [0u8; 3];
             chunk_header[0] = if self.dict_reset_needed { 0x01 } else { 0x02 };
             chunk_header[1] = ((chunk_size - 1) >> 8) as u8;
@@ -250,6 +254,7 @@ impl<W: Write> LZMA2Writer<W> {
         self.state_reset_needed = true;
         Ok(())
     }
+
     fn write_chunk(&mut self) -> std::io::Result<()> {
         let compressed_size = self.rc.finish_buffer()?.unwrap_or_default() as u32;
         let mut uncompressed_size = self.lzma.data.uncompressed_size;
@@ -272,6 +277,7 @@ impl<W: Write> LZMA2Writer<W> {
         self.rc.reset_buffer();
         Ok(())
     }
+
     fn write_end_marker(&mut self) -> std::io::Result<()> {
         assert!(!self.finished);
 
@@ -296,9 +302,6 @@ impl<W: Write> LZMA2Writer<W> {
     }
 }
 
-impl<W: Write> Drop for LZMA2Writer<W> {
-    fn drop(&mut self) {}
-}
 impl<W: Write> Write for LZMA2Writer<W> {
     fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
         let mut len = buf.len();

@@ -17,11 +17,13 @@ const LZMA2_COMPRESSED_LIMIT: u32 = (64 << 10) - 26;
 const DIST_PRICE_UPDATE_INTERVAL: u32 = FULL_DISTANCES as u32;
 const ALIGN_PRICE_UPDATE_INTERVAL: u32 = ALIGN_SIZE as u32;
 const PRICE_UPDATE_INTERVAL: usize = 32;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum EncodeMode {
     Fast,
     Normal,
 }
+
 pub trait LZMAEncoderTrait {
     fn get_next_symbol(&mut self, encoder: &mut LZMAEncoder) -> u32;
     fn reset(&mut self) {}
@@ -31,6 +33,7 @@ pub enum LZMAEncoderModes {
     Fast(FashEncoderMode),
     Normal(NormalEncoderMode),
 }
+
 impl LZMAEncoderTrait for LZMAEncoderModes {
     fn get_next_symbol(&mut self, encoder: &mut LZMAEncoder) -> u32 {
         match self {
@@ -101,7 +104,7 @@ impl LZMAEncoder {
             i -= 1;
         }
 
-        return (i << 1) + ((dist >> (i - 1)) & 1);
+        (i << 1) + ((dist >> (i - 1)) & 1)
     }
 
     pub fn get_mem_usage(
@@ -124,6 +127,7 @@ impl LZMAEncoder {
 }
 
 impl LZMAEncoder {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         mode: EncodeMode,
         lc: u32,
@@ -171,8 +175,8 @@ impl LZMAEncoder {
         };
 
         let literal_encoder = LiteralEncoder::new(lc, lp);
-        let match_len_encoder = LengthEncoder::new(pb, nice_len as usize);
-        let rep_len_encoder = LengthEncoder::new(pb, nice_len as usize);
+        let match_len_encoder = LengthEncoder::new(pb, nice_len);
+        let rep_len_encoder = LengthEncoder::new(pb, nice_len);
         let dist_slot_price_size = LZMAEncoder::get_dist_slot(dict_size - 1) + 1;
         let mut e = Self {
             coder: LZMACoder::new(pb as usize),
@@ -245,7 +249,7 @@ impl LZMAEncoder {
     }
 
     fn encode_init<W: Write>(&mut self, rc: &mut RangeEncoder<W>) -> std::io::Result<bool> {
-        assert!(self.data.read_ahead == -1);
+        assert_eq!(self.data.read_ahead, -1);
         if !self.lz.has_enough_data(0) {
             return Ok(false);
         }
@@ -255,9 +259,9 @@ impl LZMAEncoder {
         self.literal_encoder
             .encode_init(&self.lz, &self.data, &mut self.coder, rc)?;
         self.data.read_ahead -= 1;
-        assert!(self.data.read_ahead == -1);
+        assert_eq!(self.data.read_ahead, -1);
         self.data.uncompressed_size += 1;
-        assert!(self.data.uncompressed_size == 1);
+        assert_eq!(self.data.uncompressed_size, 1);
         Ok(true)
     }
 
@@ -275,7 +279,7 @@ impl LZMAEncoder {
         let pos_state = (self.lz.get_pos() - self.data.read_ahead) as u32 & self.pos_mask;
 
         if self.data.back == -1 {
-            assert!(len == 1);
+            assert_eq!(len, 1);
             let state = self.state.get() as usize;
             rc.encode_bit(&mut self.is_match[state], pos_state as _, 0)?;
             self.literal_encoder
@@ -344,13 +348,13 @@ impl LZMAEncoder {
 
             if dist_slot < DIST_MODEL_END as u32 {
                 rc.encode_reverse_bit_tree(
-                    &mut self.get_dist_special(dist_slot as usize - DIST_MODEL_START),
+                    self.get_dist_special(dist_slot as usize - DIST_MODEL_START),
                     dist_reduced,
                 )?;
             } else {
                 rc.encode_direct_bits(dist_reduced >> ALIGN_BITS, footer_bits - ALIGN_BITS as u32)?;
                 rc.encode_reverse_bit_tree(&mut self.dist_align, dist_reduced & ALIGN_MASK as u32)?;
-                self.data.align_price_count = self.data.align_price_count - 1;
+                self.data.align_price_count -= 1;
             }
         }
 
@@ -359,7 +363,7 @@ impl LZMAEncoder {
         self.reps[1] = self.reps[0];
         self.reps[0] = dist as i32;
 
-        self.data.dist_price_count = self.data.dist_price_count - 1;
+        self.data.dist_price_count -= 1;
         Ok(())
     }
 
@@ -372,7 +376,7 @@ impl LZMAEncoder {
     ) -> std::io::Result<()> {
         if rep == 0 {
             let state = self.state.get() as usize;
-            rc.encode_bit(&mut self.is_rep0, state as usize, 0)?;
+            rc.encode_bit(&mut self.is_rep0, state, 0)?;
             let state = self.state.get() as usize;
             rc.encode_bit(
                 &mut self.is_rep0_long[state],
@@ -495,7 +499,7 @@ impl LZMAEncoder {
         let any_match_price = self.get_any_match_price(state, pos_state);
         let any_rep_price = self.get_any_rep_price(any_match_price, state);
         let long_rep_price = self.get_long_rep_price(any_rep_price, rep, state, pos_state);
-        return long_rep_price + self.rep_len_encoder.get_price(len as _, pos_state as _);
+        long_rep_price + self.rep_len_encoder.get_price(len as _, pos_state as _)
     }
 
     pub(super) fn get_match_and_len_price(
@@ -519,7 +523,7 @@ impl LZMAEncoder {
                 + self.data.align_prices[(dist & ALIGN_MASK as u32) as usize];
         }
 
-        return price;
+        price
     }
 
     pub(super) fn update_dist_prices(&mut self) {
@@ -567,8 +571,9 @@ impl LZMAEncoder {
             }
         }
 
-        assert!(dist == FULL_DISTANCES);
+        assert_eq!(dist, FULL_DISTANCES);
     }
+
     fn update_align_prices(&mut self) {
         self.data.align_price_count = ALIGN_PRICE_UPDATE_INTERVAL as i32;
 
@@ -629,6 +634,7 @@ pub(super) struct LiteralEncoder {
     coder: LiteralCoder,
     subencoders: Vec<LiteralSubencoder>,
 }
+
 #[derive(Clone)]
 struct LiteralSubencoder {
     coder: LiteralSubcoder,
@@ -715,7 +721,7 @@ impl LiteralSubencoder {
         coder: &mut LZMACoder,
         rc: &mut RangeEncoder<W>,
     ) -> std::io::Result<()> {
-        let mut symbol = (lz.get_byte_backward(data.read_ahead) as u32 | 0x100) as u32;
+        let mut symbol = lz.get_byte_backward(data.read_ahead) as u32 | 0x100;
 
         if coder.state.is_literal() {
             let mut subencoder_index;
@@ -738,13 +744,13 @@ impl LiteralSubencoder {
             let mut bit;
 
             loop {
-                match_byte = match_byte << 1;
+                match_byte <<= 1;
                 match_bit = match_byte & offset;
                 subencoder_index = offset + match_bit + (symbol >> 8);
                 bit = (symbol >> 7) & 1;
                 rc.encode_bit(&mut self.coder.probs, subencoder_index as _, bit)?;
                 symbol <<= 1;
-                offset = offset & (!(match_byte ^ symbol));
+                offset &= !(match_byte ^ symbol);
                 if symbol >= 0x10000 {
                     break;
                 }
@@ -797,7 +803,7 @@ impl LiteralSubencoder {
                 break;
             }
         }
-        return price;
+        price
     }
 }
 
@@ -889,5 +895,4 @@ impl LengthEncoder {
                 + RangeEncoder::get_bit_tree_price(&mut self.coder.high, (i - start) as u32)
         }
     }
-    //
 }

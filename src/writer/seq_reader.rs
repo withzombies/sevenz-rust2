@@ -1,9 +1,10 @@
 use std::{
     fs::File,
-    io::{self, Read},
+    io::{Read},
     ops::Deref,
     path::{Path, PathBuf},
 };
+
 #[derive(Default)]
 pub struct SeqReader<R> {
     readers: Vec<R>,
@@ -55,7 +56,7 @@ impl<R> SeqReader<R> {
 }
 
 impl<R: Read> Read for SeqReader<R> {
-    fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
+    fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
         let mut i = 0;
         while self.current < self.readers.len() {
             let r = &mut self.readers[self.current];
@@ -85,7 +86,7 @@ impl<R> From<R> for SourceReader<R> {
 }
 
 impl<R: Read> Read for SourceReader<R> {
-    fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
+    fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
         let n = self.reader.read(buf)?;
         if self.crc_value == 0 {
             if n > 0 {
@@ -135,7 +136,7 @@ impl LazyFileReader {
 }
 
 impl Read for LazyFileReader {
-    fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
+    fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
         if self.end {
             return Ok(0);
         }

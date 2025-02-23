@@ -58,9 +58,10 @@ impl Hash234 {
         self.hash2_value = (tmp & HASH2_MASK) as i32;
         let tmp = tmp ^ ((buf[2] as u32) << 8);
         self.hash3_value = (tmp & HASH3_MASK) as i32;
-        let tmp = tmp ^ CRC_TABLE[buf[3] as usize] << 5;
+        let tmp = tmp ^ (CRC_TABLE[buf[3] as usize] << 5);
         self.hash4_value = (tmp & self.hash4_mask) as i32;
     }
+
     pub fn get_hash2_pos(&self) -> i32 {
         self.hash2_table[self.hash2_value as usize]
     }
@@ -87,7 +88,7 @@ impl Hash234 {
     }
 }
 
-const CRC_TABLE: &'static [u32] = &[
+const CRC_TABLE: &[u32] = &[
     0x0, 0x77073096, 0xee0e612c, 0x990951ba, 0x76dc419, 0x706af48f, 0xe963a535, 0x9e6495a3,
     0xedb8832, 0x79dcb8a4, 0xe0d5e91e, 0x97d2d988, 0x9b64c2b, 0x7eb17cbd, 0xe7b82d07, 0x90bf1d91,
     0x1db71064, 0x6ab020f2, 0xf3b97148, 0x84be41de, 0x1adad47d, 0x6ddde4eb, 0xf4d4b551, 0x83d385c7,

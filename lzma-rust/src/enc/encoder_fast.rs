@@ -83,15 +83,14 @@ impl LZMAEncoderTrait for FashEncoderMode {
             }
         }
 
-        if best_rep_len >= MATCH_LEN_MIN {
-            if best_rep_len + 1 >= main_len as usize
+        if best_rep_len >= MATCH_LEN_MIN
+            && (best_rep_len + 1 >= main_len as usize
                 || (best_rep_len + 2 >= main_len as usize && main_dist >= (1 << 9))
-                || (best_rep_len + 3 >= main_len as usize && main_dist >= (1 << 15))
-            {
-                encoder.data.back = best_rep_index as _;
-                encoder.skip(best_rep_len - 1);
-                return best_rep_len as _;
-            }
+                || (best_rep_len + 3 >= main_len as usize && main_dist >= (1 << 15)))
+        {
+            encoder.data.back = best_rep_index as _;
+            encoder.skip(best_rep_len - 1);
+            return best_rep_len as _;
         }
 
         if main_len < MATCH_LEN_MIN as _ || avail <= MATCH_LEN_MIN as _ {
@@ -109,7 +108,7 @@ impl LZMAEncoderTrait for FashEncoderMode {
                 || (new_len == main_len + 1 && !change_pair(main_dist as _, new_dist as _))
                 || new_len > main_len + 1
                 || (new_len + 1 >= main_len
-                    && main_len >= MATCH_LEN_MIN as u32 + 1
+                    && main_len > MATCH_LEN_MIN as u32
                     && change_pair(new_dist as _, main_dist as _))
             {
                 return 1;

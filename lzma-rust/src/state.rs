@@ -1,7 +1,3 @@
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct State {
-    state: u8,
-}
 pub const STATES: usize = 12;
 
 const LIT_STATES: u8 = 7;
@@ -17,6 +13,11 @@ const LIT_LONGREP: u8 = 8;
 const LIT_SHORTREP: u8 = 9;
 const NONLIT_MATCH: u8 = 10;
 const NONLIT_REP: u8 = 11;
+
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct State {
+    state: u8,
+}
 
 impl State {
     pub fn new() -> Self {
@@ -70,7 +71,7 @@ impl State {
     }
 
     pub fn is_literal(&self) -> bool {
-        return self.state < LIT_STATES;
+        self.state < LIT_STATES
     }
 }
 
