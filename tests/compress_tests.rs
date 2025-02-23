@@ -130,7 +130,7 @@ fn compress_folder_with_nested_folder() {
     );
 }
 
-#[cfg(all(feature = "compress", feature = "aes"))]
+#[cfg(all(feature = "compress", feature = "aes256"))]
 #[test]
 fn compress_one_file_with_random_content_encrypted() {
     use rand::Rng;
@@ -138,10 +138,10 @@ fn compress_one_file_with_random_content_encrypted() {
         let temp_dir = tempdir().unwrap();
         let source = temp_dir.path().join("file1.txt");
         let mut rng = rand::thread_rng();
-        let mut content = String::with_capacity(rng.gen_range(1..10240));
+        let mut content = String::with_capacity(rng.random_range(1..10240));
 
         for _ in 0..content.capacity() {
-            let c = rng.gen_range(' '..'~');
+            let c = rng.random_range(' '..'~');
             content.push(c);
         }
         std::fs::write(&source, &content).unwrap();
