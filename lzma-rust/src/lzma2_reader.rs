@@ -35,7 +35,7 @@ pub struct LZMA2Reader<R> {
 }
 
 #[inline]
-pub fn get_memery_usage(dict_size: u32) -> u32 {
+pub fn get_memory_usage(dict_size: u32) -> u32 {
     40 + COMPRESSED_SIZE_MAX / 1024 + get_dict_size(dict_size) / 1024
 }
 

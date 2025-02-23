@@ -12,7 +12,7 @@ use crate::{
     delta::DeltaReader,
     error::Error,
     folder::Coder,
-    lzma::{lzma2_get_memery_usage, LZMA2Reader, LZMAReader},
+    lzma::{lzma2_get_memory_usage, LZMA2Reader, LZMAReader},
 };
 
 #[allow(clippy::upper_case_acronyms)]
@@ -84,7 +84,7 @@ pub fn add_decoder<I: Read>(
         }
         SevenZMethod::ID_LZMA2 => {
             let dic_size = get_lzma2_dic_size(coder)?;
-            let mem_size = lzma2_get_memery_usage(dic_size) as usize;
+            let mem_size = lzma2_get_memory_usage(dic_size) as usize;
             if mem_size > max_mem_limit_kb {
                 return Err(Error::MaxMemLimited {
                     max_kb: max_mem_limit_kb,

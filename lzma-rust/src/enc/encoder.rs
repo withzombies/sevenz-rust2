@@ -116,10 +116,10 @@ impl LZMAEncoder {
         let mut m = 80;
         match mode {
             EncodeMode::Fast => {
-                m += FashEncoderMode::get_memery_usage(dict_size, extra_size_before, mf);
+                m += FashEncoderMode::get_memory_usage(dict_size, extra_size_before, mf);
             }
             EncodeMode::Normal => {
-                m += NormalEncoderMode::get_memery_usage(dict_size, extra_size_before, mf);
+                m += NormalEncoderMode::get_memory_usage(dict_size, extra_size_before, mf);
             }
         }
         m

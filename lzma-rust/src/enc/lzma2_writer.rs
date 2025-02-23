@@ -121,7 +121,7 @@ impl LZMA2Options {
         }
     }
 
-    pub fn get_memery_usage(&self) -> u32 {
+    pub fn get_memory_usage(&self) -> u32 {
         let dict_size = self.dict_size;
         let extra_size_before = get_extra_size_before(dict_size);
         70 + LZMAEncoder::get_mem_usage(self.mode, dict_size, extra_size_before, self.mf)

@@ -10,10 +10,10 @@ mod enc;
 
 #[cfg(feature = "encoder")]
 pub use enc::*;
-pub use lzma2_reader::get_memery_usage as lzma2_get_memery_usage;
+pub use lzma2_reader::get_memory_usage as lzma2_get_memory_usage;
 pub use lzma2_reader::LZMA2Reader;
-pub use lzma_reader::get_memery_usage as lzma_get_memery_usage;
-pub use lzma_reader::get_memery_usage_by_props as lzma_get_memery_usage_by_props;
+pub use lzma_reader::get_memory_usage as lzma_get_memory_usage;
+pub use lzma_reader::get_memory_usage_by_props as lzma_get_memory_usage_by_props;
 pub use lzma_reader::LZMAReader;
 
 use state::*;

@@ -7,7 +7,7 @@ use super::lz::LZDecoder;
 use super::range_dec::RangeDecoder;
 use super::*;
 
-pub fn get_memery_usage_by_props(dict_size: u32, props_byte: u8) -> std::io::Result<u32> {
+pub fn get_memory_usage_by_props(dict_size: u32, props_byte: u8) -> std::io::Result<u32> {
     if dict_size > DICT_SIZE_MAX {
         return Err(Error::new(ErrorKind::InvalidInput, "dict size too large"));
     }
@@ -17,10 +17,10 @@ pub fn get_memery_usage_by_props(dict_size: u32, props_byte: u8) -> std::io::Res
     let props = props_byte % (9 * 5);
     let lp = props / 9;
     let lc = props - lp * 9;
-    get_memery_usage(dict_size, lc as u32, lp as u32)
+    get_memory_usage(dict_size, lc as u32, lp as u32)
 }
 
-pub fn get_memery_usage(dict_size: u32, lc: u32, lp: u32) -> std::io::Result<u32> {
+pub fn get_memory_usage(dict_size: u32, lc: u32, lp: u32) -> std::io::Result<u32> {
     if lc > 8 || lp > 4 {
         return Err(Error::new(ErrorKind::InvalidInput, "Invalid lc or lp"));
     }
@@ -141,12 +141,12 @@ impl<R: Read> LZMAReader<R> {
         let dict_size = reader.read_u32::<LittleEndian>()?;
 
         let uncomp_size = reader.read_u64::<LittleEndian>()?;
-        let need_mem = get_memery_usage_by_props(dict_size, props)?;
+        let need_mem = get_memory_usage_by_props(dict_size, props)?;
         if mem_limit_kb < need_mem {
             return Err(Error::new(
                 ErrorKind::OutOfMemory,
                 format!(
-                    "{}kb memery needed,but limit was {}kb",
+                    "{}kb memory needed,but limit was {}kb",
                     need_mem, mem_limit_kb
                 ),
             ));

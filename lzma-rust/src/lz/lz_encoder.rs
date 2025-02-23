@@ -41,7 +41,7 @@ impl Default for MFType {
 }
 impl MFType {
     #[inline]
-    fn get_memery_usage(self, dict_size: u32) -> u32 {
+    fn get_memory_usage(self, dict_size: u32) -> u32 {
         match self {
             MFType::HC4 => HC4::get_mem_usage(dict_size),
             MFType::BT4 => BT4::get_mem_usage(dict_size),
@@ -86,7 +86,7 @@ impl Matches {
 }
 
 impl LZEncoder {
-    pub fn get_memery_usage(
+    pub fn get_memory_usage(
         dict_size: u32,
         extra_size_before: u32,
         extra_size_after: u32,
@@ -98,7 +98,7 @@ impl LZEncoder {
             extra_size_before,
             extra_size_after,
             match_len_max,
-        ) + mf.get_memery_usage(dict_size)
+        ) + mf.get_memory_usage(dict_size)
     }
 
     pub fn new_hc4(

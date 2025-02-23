@@ -21,7 +21,7 @@ pub fn compress<W: Write + Seek>(src: impl AsRef<Path>, dest: W) -> Result<W, Er
 }
 
 #[cfg(feature = "aes256")]
-pub fn compress_encypted<W: Write + Seek>(
+pub fn compress_encrypted<W: Write + Seek>(
     src: impl AsRef<Path>,
     dest: W,
     password: Password,
@@ -70,7 +70,7 @@ pub fn compress_to_path_encrypted(
                 .map_err(|e| Error::io_msg(e, format!("Create dir failed:{:?}", dest.as_ref())))?;
         }
     }
-    compress_encypted(
+    compress_encrypted(
         src,
         File::create(dest.as_ref())
             .map_err(|e| Error::file_open(e, dest.as_ref().to_string_lossy().to_string()))?,

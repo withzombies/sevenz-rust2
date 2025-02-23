@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Replaces insecure usage of rand with getrandom
+- Renamed `get_memery_usage()` into `get_memory_usage()`
+- Renamed `compress_encypted()` into `compress_encrypted()`
 
 ### Changed
 
