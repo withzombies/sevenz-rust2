@@ -2,6 +2,7 @@ use super::{password::Password, *};
 use js_sys::*;
 use std::io::{Read, Seek, SeekFrom, Write};
 use wasm_bindgen::prelude::*;
+
 #[wasm_bindgen]
 pub fn decompress(src: Uint8Array, pwd: &str, f: &Function) -> Result<(), String> {
     let mut src_reader = Uint8ArrayStream::new(src);
@@ -63,6 +64,7 @@ pub fn compress(entries: Vec<JsString>, datas: Vec<Uint8Array>) -> Result<Uint8A
 
     Ok(out.data)
 }
+
 struct Uint8ArrayStream {
     data: Uint8Array,
     pos: usize,
@@ -106,6 +108,7 @@ impl Uint8ArrayStream {
         Self { data, pos: 0 }
     }
 }
+
 impl Read for Uint8ArrayStream {
     fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
         let end = (self.pos + buf.len()).min(self.data.length() as usize);

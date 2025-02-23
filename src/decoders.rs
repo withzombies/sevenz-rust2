@@ -30,15 +30,6 @@ pub enum Decoder<R: Read> {
     AES256SHA256(Aes256Sha256Decoder<R>),
 }
 
-// impl<R: Read> Decoder<R> {
-//     pub fn num_streams(&self) -> usize {
-//         match self {
-//             Self::BCJ(_) => 4,
-//             _ => 1,
-//         }
-//     }
-// }
-
 impl<R: Read> Read for Decoder<R> {
     fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
         match self {

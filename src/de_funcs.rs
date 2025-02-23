@@ -1,12 +1,11 @@
 use crate::{password::Password, Error, *};
 use std::io::{Read, Seek};
 use std::path::{Path, PathBuf};
-///
+
 /// decompress a 7z file
 /// # Example
 /// ```no_run
 /// sevenz_rust::decompress_file("sample.7z", "sample").expect("complete");
-///
 /// ```
 ///
 #[inline]
@@ -48,7 +47,6 @@ pub fn decompress_with_extract_fn<R: Read + Seek>(
 /// # Example
 /// ```no_run
 /// sevenz_rust::decompress_file_with_password("sample.7z", "sample", "password".into()).expect("complete");
-///
 /// ```
 #[inline]
 pub fn decompress_file_with_password(

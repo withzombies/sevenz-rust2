@@ -1,5 +1,4 @@
 //! 7z Compressor helper functions
-//!
 
 use std::{
     fs::File,
@@ -9,7 +8,7 @@ use std::{
 
 use crate::*;
 
-/// hepler function to compress `src` path to `dest` writer
+/// Helper function to compress `src` path to `dest` writer
 pub fn compress<W: Write + Seek>(src: impl AsRef<Path>, dest: W) -> Result<W, Error> {
     let mut z = SevenZWriter::new(dest)?;
     let parent = if src.as_ref().is_dir() {
@@ -43,7 +42,7 @@ pub fn compress_encypted<W: Write + Seek>(
     z.finish().map_err(Error::io)
 }
 
-/// hepler function to compress `src` path to `dest` path
+/// Helper function to compress `src` path to `dest` path
 pub fn compress_to_path(src: impl AsRef<Path>, dest: impl AsRef<Path>) -> Result<(), Error> {
     if let Some(p) = dest.as_ref().parent() {
         if !p.exists() {
@@ -121,7 +120,6 @@ impl<W: Write + Seek> SevenZWriter<W> {
     /// [Solid compression](https://en.wikipedia.org/wiki/Solid_compression)
     /// compress all files in [path].
     /// With multiple files in one block.
-    ///
     #[inline]
     pub fn push_source_path(
         &mut self,
@@ -168,7 +166,8 @@ fn collect_file_paths(
     Ok(())
 }
 
-const MAX_BLOCK_SIZE: u64 = 4 * 1024 * 1024 * 1024; //4G
+const MAX_BLOCK_SIZE: u64 = 4 * 1024 * 1024 * 1024; // 4 GiB
+
 fn encode_path<W: Write + Seek>(
     solid: bool,
     src: impl AsRef<Path>,

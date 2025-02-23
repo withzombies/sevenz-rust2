@@ -103,7 +103,6 @@ impl<W: Write + Seek> SevenZWriter<W> {
     /// Sets the default compression methods to use for entry contents.
     /// The default is LZMA2.
     /// And currently only support LZMA2
-    ///
     pub fn set_content_methods(
         &mut self,
         content_methods: Vec<SevenZMethodConfiguration>,

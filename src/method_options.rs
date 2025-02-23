@@ -20,6 +20,7 @@ impl From<AesEncoderOptions> for MethodOptions {
         Self::Aes(value)
     }
 }
+
 #[cfg(feature = "aes256")]
 impl From<AesEncoderOptions> for crate::SevenZMethodConfiguration {
     fn from(value: AesEncoderOptions) -> Self {

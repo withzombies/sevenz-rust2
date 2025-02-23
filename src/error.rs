@@ -13,7 +13,6 @@ pub enum Error {
     BadTerminatedPackInfo(u8),
     BadTerminatedSubStreamsInfo,
     BadTerminatedheader(u8),
-
     ExternalUnsupported,
     UnsupportedCompressionMethod(String),
     MaxMemLimited { max_kb: usize, actaul_kb: usize },

@@ -1347,7 +1347,6 @@ impl<R: Read + Seek> SevenZReader<R> {
     ///
     /// To speed up decompression, you can check this example [examples/forder_dec.rs](https://github.com/dyz1990/sevenz-rust/blob/main/examples/forder_dec.rs).
     /// And this example [mt_decompress.rs](https://github.com/dyz1990/sevenz-rust/blob/main/examples/mt_decompress.rs) if you want use multi-thread.
-    ///
     pub fn for_each_entries<F: FnMut(&SevenZArchiveEntry, &mut dyn Read) -> Result<bool, Error>>(
         &mut self,
         mut each: F,
@@ -1423,7 +1422,6 @@ impl<'a, R: Read + Seek> BlockDecoder<'a, R> {
     ///
     /// To speed up decompression, you can check this example [examples/forder_dec.rs](https://github.com/dyz1990/sevenz-rust/blob/main/examples/forder_dec.rs).
     /// And this example [mt_decompress.rs](https://github.com/dyz1990/sevenz-rust/blob/main/examples/mt_decompress.rs) if you want use multi-thread.
-    ///
     pub fn for_each_entries<F: FnMut(&SevenZArchiveEntry, &mut dyn Read) -> Result<bool, Error>>(
         self,
         each: &mut F,

@@ -19,6 +19,7 @@ impl Password {
         self.0.is_empty()
     }
 }
+
 impl AsRef<[u8]> for Password {
     fn as_ref(&self) -> &[u8] {
         &self.0

@@ -1,5 +1,3 @@
-#![allow(unused)]
-
 #[derive(Debug, Default, Clone)]
 pub struct Folder {
     pub coders: Vec<Coder>,
@@ -67,6 +65,7 @@ impl Coder {
     pub fn decompression_method_id(&self) -> &[u8] {
         &self.decompression_method_id[0..self.id_size]
     }
+
     pub fn decompression_method_id_mut(&mut self) -> &mut [u8] {
         &mut self.decompression_method_id[0..self.id_size]
     }
@@ -82,6 +81,7 @@ pub struct OrderedCoderIter<'a> {
     folder: &'a Folder,
     current: Option<u64>,
 }
+
 impl<'a> OrderedCoderIter<'a> {
     fn new(folder: &'a Folder) -> Self {
         let current = folder.packed_streams.first().copied();
