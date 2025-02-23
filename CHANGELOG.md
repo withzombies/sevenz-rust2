@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Updated dependency bit-set v0.8
+- Updated dependency bzip2 v0.5
+- Updated dependency nt-time v0.10
 
 ### 0.6.1 2024-0717
 
