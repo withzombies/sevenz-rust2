@@ -137,7 +137,7 @@ fn compress_one_file_with_random_content_encrypted() {
     for _ in 0..10 {
         let temp_dir = tempdir().unwrap();
         let source = temp_dir.path().join("file1.txt");
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let mut content = String::with_capacity(rng.random_range(1..10240));
 
         for _ in 0..content.capacity() {
