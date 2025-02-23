@@ -1,3 +1,5 @@
+### unreleased
+
 ### 0.6.1 2024-0717
 - Fixed 'unsafe precondition(s) violated'. Closed #63
 

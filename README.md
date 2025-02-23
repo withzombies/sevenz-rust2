@@ -1,20 +1,20 @@
 [![Crate](https://img.shields.io/crates/v/sevenz-rust.svg)](https://crates.io/crates/sevenz-rust)
  [![Documentation](https://docs.rs/sevenz-rust/badge.svg)](https://docs.rs/sevenz-rust)
  
-This project is a 7z compressor/decompressor written in pure rust.<br/>
-And it's very much inspired by the [apache commons-compress](https://commons.apache.org/proper/commons-compress/) project.<br/>
+This project is a 7z compressor/decompressor written in pure rust.
+
+And it's very much inspired by the [apache commons-compress](https://commons.apache.org/proper/commons-compress/) project.
 
 The LZMA/LZMA2 decoder and all filters code was ported from [tukaani xz for java](https://tukaani.org/xz/java.html)
 
 ## Decompression
 
 Supported codecs:
- - [x] BZIP2 (require feature 'bzip2')
+ - [x] BZIP2 (requires feature 'bzip2')
  - [x] COPY
  - [x] LZMA
  - [x] LZMA2
- - [x] ZSTD  (require feature 'zstd')
-
+ - [x] ZSTD  (requires feature 'zstd')
 
 Supported filters:
  - [x] BCJ X86
@@ -26,27 +26,26 @@ Supported filters:
  - [x] DELTA
  - [x] BJC2
 
-
-
-
 ### Usage
 
-```
+```toml
 [dependencies]
-sevenz-rust={version="0.2"}
+sevenz-rust = { version = "0.6" }
 ```
 
-Decompress source file "data/sample.7z" to dest path "data/sample"
+Decompress source file "data/sample.7z" to destination path "data/sample":
+
 ```rust
 sevenz_rust::decompress_file("data/sample.7z", "data/sample").expect("complete");
 ```
 
-#### Decompress a encrypted 7z file
+#### Decompress an encrypted 7z file
 
-Add 'aes256' feature
-```
+Add the 'aes256' feature:
+
+```toml
 [dependencies]
-sevenz-rust={version="0.2", features=["aes256"]}
+sevenz-rust = { version = "0.6", features = ["aes256"] }
 ```
 
 ```rust
@@ -54,61 +53,59 @@ sevenz_rust::decompress_file_with_password("path/to/encrypted.7z", "path/to/outp
 ```
 
 #### Multi-thread decompress
-check [examples/mt_decompress](https://github.com/dyz1990/sevenz-rust/blob/main/examples/mt_decompress.rs)
 
-
+Please check [examples/mt_decompress](https://github.com/dyz1990/sevenz-rust/blob/main/examples/mt_decompress.rs)
 
 ## Compression
-Currently only support LZMA2 method.
 
-```
+Currently, this crate only supports the LZMA2 compression algorithm.
+
+```toml
 [dependencies]
-sevenz-rust={version="0.5.0", features=["compress"]}
+sevenz-rust = { version = "0.6", features = ["compress"] }
 ```
 
-Use the helper function to create a 7z file with source path.
+Use the helper function to create a 7z file with source path:
+
 ```rust
 sevenz_rust::compress_to_path("examples/data/sample", "examples/data/sample.7z").expect("compress ok");
 ```
 
 ### With AES encryption
-require version>=0.3.0
-```
+
+```toml
 [dependencies]
-sevenz-rust={version="0.5", features=["compress","aes256"]}
+sevenz-rust = { version = "0.6", features = ["compress", "aes256"] }
 ```
 
-Use the helper function to create a 7z file with source path and password.
+Use the helper function to create a 7z file with source path and password:
+
 ```rust
 sevenz_rust::compress_to_path_encrypted("examples/data/sample", "examples/data/sample.7z", "password".into()).expect("compress ok");
 ```
 
 ### Advance
 
-```
+```toml
 [dependencies]
-sevenz-rust={version="0.5.0", features=["compress","aes256"]}
+sevenz-rust = { version = "0.6", features = ["compress", "aes256"] }
 ```
 
 #### Solid compression
 
-```
+```rust
 use sevenz_rust::*;
 
 let mut sz = SevenZWriter::create("dest.7z").expect("create writer ok");
-
 sz.push_source_path("path/to/compress", |_| true).expect("pack ok");
-
 sz.finish().expect("compress ok");
-
 ```
-
 
 #### Compression methods
 
-with encryption and lzma2 options
+With encryption and lzma2 options:
 
-```
+```rust
 use sevenz_rust::*;
 
 let mut sz = SevenZWriter::create("dest.7z").expect("create writer ok");
@@ -117,10 +114,9 @@ sz.set_content_methods(vec![
     lzma::LZMA2Options::with_preset(9).into(),
 ]);
 sz.push_source_path("path/to/compress", |_| true).expect("pack ok");
-
 sz.finish().expect("compress ok");
-
 ```
 
-## [Changelog](CHANGELOG.md)
+## Licence
 
+Licensed under the [Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0).
