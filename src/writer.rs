@@ -120,30 +120,6 @@ impl<W: Write + Seek> SevenZWriter<W> {
         self.encrypt_header = enabled;
     }
 
-    /// Create an archive entry using the file in `path` and entry_name provided.
-    /// #deprecated use SevenZArchiveEntry::from_path instead
-    #[deprecated]
-    pub fn create_archive_entry(path: impl AsRef<Path>, entry_name: String) -> SevenZArchiveEntry {
-        let path = path.as_ref();
-
-        let mut entry = SevenZArchiveEntry {
-            name: entry_name,
-            has_stream: path.is_file(),
-            is_directory: path.is_dir(),
-            ..Default::default()
-        };
-
-        if let Ok(meta) = path.metadata() {
-            if let Ok(modified) = meta.modified() {
-                entry.last_modified_date = modified
-                    .try_into()
-                    .expect("last modified date should be in the range of file time");
-                entry.has_last_modified_date = entry.last_modified_date.to_raw() > 0;
-            }
-        }
-        entry
-    }
-
     /// Adds an archive `entry` with data from `reader`
     /// # Examples
     /// ```no_run

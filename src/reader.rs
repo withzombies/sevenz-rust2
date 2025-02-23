@@ -1376,11 +1376,6 @@ impl<R: Read + Seek> SevenZReader<R> {
     }
 }
 
-/// Alias for ['BlockDecoder'], used for compatibility purposes.
-#[allow(unused)]
-#[deprecated]
-pub type FolderDecoder<'a, R> = BlockDecoder<'a, R>;
-
 pub struct BlockDecoder<'a, R: Read + Seek> {
     folder_index: usize,
     archive: &'a Archive,

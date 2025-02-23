@@ -17,6 +17,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated dependency bzip2 v0.5
 - Updated dependency nt-time v0.10
 
+### Removed
+
+- Removed deprecated `FolderDecoder`. Use `BlockDecoder` instead
+- Removed deprecated `SevenZWriter::create_archive_entry()`. Use `SevenZArchiveEntry::from_path()` instead
+
 ### 0.6.1 2024-0717
 
 - Fixed 'unsafe precondition(s) violated'. Closed #63
