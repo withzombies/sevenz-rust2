@@ -1,12 +1,10 @@
+extern crate filetime_creation as ft;
 #[cfg(target_arch = "wasm32")]
 extern crate wasm_bindgen;
 #[cfg(feature = "aes256")]
 mod aes256sha256;
-mod bcj2;
-#[cfg(target_arch = "wasm32")]
-mod wasm;
-extern crate filetime_creation as ft;
 mod bcj;
+mod bcj2;
 #[cfg(not(target_arch = "wasm32"))]
 mod de_funcs;
 mod delta;
@@ -18,6 +16,8 @@ mod error;
 mod method_options;
 mod password;
 mod reader;
+#[cfg(target_arch = "wasm32")]
+mod wasm;
 #[cfg(feature = "compress")]
 mod writer;
 

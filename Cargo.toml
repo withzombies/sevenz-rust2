@@ -26,7 +26,7 @@ byteorder = "1.5"
 bzip2 = { version = "0.5", optional = true }
 getrandom = { version = "0.3", optional = true }
 cbc = { version = "0.1", optional = true }
-crc = "3.0"
+crc32fast = "1.4"
 filetime_creation = "0.2"
 lzma-rust = { path = "lzma-rust", default-features = false, version = "0.1.7" }
 nt-time = "0.10"

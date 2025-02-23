@@ -2,9 +2,12 @@ mod pack_info;
 mod seq_reader;
 mod unpack_info;
 
-use crate::{archive::*, encoders, lzma::*, reader::CRC32, Error, SevenZArchiveEntry};
+pub use self::seq_reader::*;
+use self::{pack_info::PackInfo, unpack_info::UnpackInfo};
+use crate::{archive::*, encoders, lzma::*, Error, SevenZArchiveEntry};
 use bit_set::BitSet;
 use byteorder::*;
+use crc32fast::Hasher;
 use std::{
     cell::Cell,
     fs::File,
@@ -13,9 +16,6 @@ use std::{
     rc::Rc,
     sync::Arc,
 };
-
-pub use self::seq_reader::*;
-use self::{pack_info::PackInfo, unpack_info::UnpackInfo};
 
 macro_rules! write_times {
     //write_i64
@@ -341,7 +341,7 @@ impl<W: Write + Seek> SevenZWriter<W> {
         self.write_encoded_header(&mut header)?;
         let header_pos = self.output.stream_position()?;
         self.output.write_all(&header)?;
-        let crc32 = CRC32.checksum(&header);
+        let crc32 = crc32fast::hash(&header);
         let mut hh = [0u8; SIGNATURE_HEADER_SIZE as usize];
         {
             let mut hhw = hh.as_mut_slice();
@@ -358,7 +358,7 @@ impl<W: Write + Seek> SevenZWriter<W> {
             hhw.write_u64::<LittleEndian>(0xffffffff & header.len() as u64)?;
             hhw.write_u32::<LittleEndian>(crc32)?;
         }
-        let crc32 = CRC32.checksum(&hh[12..]);
+        let crc32 = crc32fast::hash(&hh[12..]);
         hh[8..12].copy_from_slice(&crc32.to_le_bytes());
 
         self.output.seek(std::io::SeekFrom::Start(0))?;
@@ -386,7 +386,7 @@ impl<W: Write + Seek> SevenZWriter<W> {
 
         let mut more_sizes = vec![];
         let size = raw_header.len() as u64;
-        let crc = CRC32.checksum(&raw_header);
+        let crc32 = crc32fast::hash(&raw_header);
         let mut methods = vec![];
 
         if self.encrypt_header {
@@ -427,7 +427,7 @@ impl<W: Write + Seek> SevenZWriter<W> {
         let mut sizes = Vec::with_capacity(1 + more_sizes.len());
         sizes.extend(more_sizes.iter().map(|s| s.get() as u64));
         sizes.push(size);
-        unpack_info.add(methods, sizes, crc);
+        unpack_info.add(methods, sizes, crc32);
 
         header.write_u8(K_ENCODED_HEADER)?;
 
@@ -622,7 +622,7 @@ fn write_bit_set<W: Write>(mut write: W, bs: &BitSet) -> std::io::Result<()> {
 
 struct CompressWrapWriter<'a, W> {
     writer: W,
-    crc: crc::Digest<'static, u32>,
+    crc: Hasher,
     cache: Vec<u8>,
     bytes_written: &'a mut usize,
 }
@@ -631,14 +631,14 @@ impl<'a, W: Write> CompressWrapWriter<'a, W> {
     pub fn new(writer: W, bytes_written: &'a mut usize) -> Self {
         Self {
             writer,
-            crc: CRC32.digest(),
+            crc: Hasher::new(),
             cache: Vec::with_capacity(8192),
             bytes_written,
         }
     }
 
     pub fn crc_value(&mut self) -> u32 {
-        let crc = std::mem::replace(&mut self.crc, CRC32.digest());
+        let crc = std::mem::replace(&mut self.crc, Hasher::new());
         crc.finalize()
     }
 }

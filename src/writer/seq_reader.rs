@@ -1,3 +1,4 @@
+use crc32fast::Hasher;
 use std::{
     fs::File,
     io::Read,
@@ -75,7 +76,7 @@ impl<R: Read> Read for SeqReader<R> {
 pub struct SourceReader<R> {
     reader: R,
     size: usize,
-    crc: crc::Digest<'static, u32>,
+    crc: Hasher,
     crc_value: u32,
 }
 
@@ -93,7 +94,7 @@ impl<R: Read> Read for SourceReader<R> {
                 self.size += n;
                 self.crc.update(&buf[..n]);
             } else {
-                let crc = std::mem::replace(&mut self.crc, crate::reader::CRC32.digest());
+                let crc = std::mem::replace(&mut self.crc, Hasher::new());
                 self.crc_value = crc.finalize();
             }
         }
@@ -106,7 +107,7 @@ impl<R> SourceReader<R> {
         Self {
             reader,
             size: 0,
-            crc: crate::reader::CRC32.digest(),
+            crc: Hasher::new(),
             crc_value: 0,
         }
     }
@@ -114,6 +115,7 @@ impl<R> SourceReader<R> {
     pub fn read_count(&self) -> usize {
         self.size
     }
+
     pub fn crc_value(&self) -> u32 {
         self.crc_value
     }
