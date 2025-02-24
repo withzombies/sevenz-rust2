@@ -35,13 +35,13 @@ Supported filters:
 
 ```toml
 [dependencies]
-sevenz-rust = { version = "0.6" }
+sevenz-rust = { version = "0.7" }
 ```
 
 Decompress source file "data/sample.7z" to destination path "data/sample":
 
 ```rust
-sevenz_rust::decompress_file("data/sample.7z", "data/sample").expect("complete");
+sevenz_rust2::decompress_file("data/sample.7z", "data/sample").expect("complete");
 ```
 
 #### Decompress an encrypted 7z file
@@ -50,11 +50,11 @@ Add the 'aes256' feature:
 
 ```toml
 [dependencies]
-sevenz-rust = { version = "0.6", features = ["aes256"] }
+sevenz-rust2 = { version = "0.7", features = ["aes256"] }
 ```
 
 ```rust
-sevenz_rust::decompress_file_with_password("path/to/encrypted.7z", "path/to/output", "password".into()).expect("complete");
+sevenz_rust2::decompress_file_with_password("path/to/encrypted.7z", "path/to/output", "password".into()).expect("complete");
 ```
 
 #### Multi-thread decompress
@@ -67,39 +67,39 @@ Currently, this crate only supports the LZMA2 compression algorithm.
 
 ```toml
 [dependencies]
-sevenz-rust = { version = "0.6", features = ["compress"] }
+sevenz-rust2 = { version = "0.7", features = ["compress"] }
 ```
 
 Use the helper function to create a 7z file with source path:
 
 ```rust
-sevenz_rust::compress_to_path("examples/data/sample", "examples/data/sample.7z").expect("compress ok");
+sevenz_rust2::compress_to_path("examples/data/sample", "examples/data/sample.7z").expect("compress ok");
 ```
 
 ### With AES encryption
 
 ```toml
 [dependencies]
-sevenz-rust = { version = "0.6", features = ["compress", "aes256"] }
+sevenz-rust2 = { version = "0.7", features = ["compress", "aes256"] }
 ```
 
 Use the helper function to create a 7z file with source path and password:
 
 ```rust
-sevenz_rust::compress_to_path_encrypted("examples/data/sample", "examples/data/sample.7z", "password".into()).expect("compress ok");
+sevenz_rust2::compress_to_path_encrypted("examples/data/sample", "examples/data/sample.7z", "password".into()).expect("compress ok");
 ```
 
 ### Advance
 
 ```toml
 [dependencies]
-sevenz-rust = { version = "0.6", features = ["compress", "aes256"] }
+sevenz-rust2 = { version = "0.7", features = ["compress", "aes256"] }
 ```
 
 #### Solid compression
 
 ```rust
-use sevenz_rust::*;
+use sevenz_rust2::*;
 
 let mut sz = SevenZWriter::create("dest.7z").expect("create writer ok");
 sz.push_source_path("path/to/compress", | _ | true).expect("pack ok");
@@ -111,7 +111,7 @@ sz.finish().expect("compress ok");
 With encryption and lzma2 options:
 
 ```rust
-use sevenz_rust::*;
+use sevenz_rust2::*;
 
 let mut sz = SevenZWriter::create("dest.7z").expect("create writer ok");
 sz.set_content_methods(vec![

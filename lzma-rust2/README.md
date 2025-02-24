@@ -11,7 +11,7 @@ This is a fork of the original, unmaintained lzma-rust crate to continue the dev
 
 ```rust
 use std::io::{Read, Write};
-use lzma_rust::*;
+use lzma_rust2::*;
 
 let s = b"Hello, world!";
 let mut out = Vec::new();
@@ -32,7 +32,7 @@ assert_eq!(s, &s2[..]);
 
 ```rust
 use std::io::{Read, Write};
-use lzma_rust::*;
+use lzma_rust2::*;
 
 let s = b"Hello, world!";
 let mut out = Vec::new();
