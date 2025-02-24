@@ -74,52 +74,33 @@ pub struct SevenZArchiveEntry {
     pub compressed_crc: u64,
     pub size: u64,
     pub compressed_size: u64,
-    // pub(crate) content_methods: LinkedList<SevenZMethodConfiguration>,
     pub(crate) content_methods: Arc<Vec<SevenZMethodConfiguration>>,
 }
 
 impl SevenZArchiveEntry {
     pub fn new() -> Self {
-        Default::default()
+        Self::default()
     }
 
-    pub fn name(&self) -> &str {
-        self.name.as_ref()
+    pub fn new_file(entry_name: &str) -> Self {
+        Self {
+            name: entry_name.to_string(),
+            has_stream: true,
+            is_directory: false,
+            ..Default::default()
+        }
     }
 
-    pub fn is_directory(&self) -> bool {
-        self.is_directory
+    pub fn new_folder(entry_name: &str) -> Self {
+        Self {
+            name: entry_name.to_string(),
+            has_stream: false,
+            is_directory: true,
+            ..Default::default()
+        }
     }
 
-    pub fn has_stream(&self) -> bool {
-        self.has_stream
-    }
-
-    pub fn creation_date(&self) -> FileTime {
-        self.creation_date
-    }
-
-    pub fn last_modified_date(&self) -> FileTime {
-        self.last_modified_date
-    }
-
-    pub fn size(&self) -> u64 {
-        self.size
-    }
-
-    pub fn windows_attributes(&self) -> u32 {
-        self.windows_attributes
-    }
-
-    pub fn access_date(&self) -> FileTime {
-        self.access_date
-    }
-
-    pub fn is_anti_item(&self) -> bool {
-        self.is_anti_item
-    }
-
-    pub fn from_path(path: impl AsRef<std::path::Path>, entry_name: String) -> SevenZArchiveEntry {
+    pub fn from_path(path: impl AsRef<std::path::Path>, entry_name: String) -> Self {
         let path = path.as_ref();
         #[cfg(target_os = "windows")]
         let entry_name = {
@@ -159,6 +140,42 @@ impl SevenZArchiveEntry {
             }
         }
         entry
+    }
+
+    pub fn name(&self) -> &str {
+        self.name.as_ref()
+    }
+
+    pub fn is_directory(&self) -> bool {
+        self.is_directory
+    }
+
+    pub fn has_stream(&self) -> bool {
+        self.has_stream
+    }
+
+    pub fn creation_date(&self) -> FileTime {
+        self.creation_date
+    }
+
+    pub fn last_modified_date(&self) -> FileTime {
+        self.last_modified_date
+    }
+
+    pub fn size(&self) -> u64 {
+        self.size
+    }
+
+    pub fn windows_attributes(&self) -> u32 {
+        self.windows_attributes
+    }
+
+    pub fn access_date(&self) -> FileTime {
+        self.access_date
+    }
+
+    pub fn is_anti_item(&self) -> bool {
+        self.is_anti_item
     }
 }
 
