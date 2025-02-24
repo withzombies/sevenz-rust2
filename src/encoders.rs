@@ -1,5 +1,3 @@
-use std::io::Write;
-
 #[cfg(feature = "aes256")]
 use crate::aes256sha256::Aes256Sha256Encoder;
 use crate::{
@@ -9,12 +7,15 @@ use crate::{
     method_options::MethodOptions,
     Error,
 };
+use std::io::Write;
 
 #[allow(clippy::upper_case_acronyms)]
 pub enum Encoder<W: Write> {
     COPY(CountingWriter<W>),
     LZMA(LZMAWriter<W>),
     LZMA2(LZMA2Writer<W>),
+    #[cfg(feature = "bzip2")]
+    BZIP2(bzip2::write::BzEncoder<CountingWriter<W>>),
     #[cfg(feature = "zstd")]
     ZSTD(zstd::Encoder<'static, CountingWriter<W>>),
     #[cfg(feature = "aes256")]
@@ -27,6 +28,8 @@ impl<W: Write> Write for Encoder<W> {
             Encoder::COPY(w) => w.write(buf),
             Encoder::LZMA(w) => w.write(buf),
             Encoder::LZMA2(w) => w.write(buf),
+            #[cfg(feature = "bzip2")]
+            Encoder::BZIP2(w) => w.write(buf),
             #[cfg(feature = "zstd")]
             Encoder::ZSTD(w) => w.write(buf),
             #[cfg(feature = "aes256")]
@@ -39,6 +42,8 @@ impl<W: Write> Write for Encoder<W> {
             Encoder::COPY(w) => w.flush(),
             Encoder::LZMA(w) => w.flush(),
             Encoder::LZMA2(w) => w.flush(),
+            #[cfg(feature = "bzip2")]
+            Encoder::BZIP2(w) => w.flush(),
             #[cfg(feature = "zstd")]
             Encoder::ZSTD(w) => w.flush(),
             #[cfg(feature = "aes256")]
@@ -66,6 +71,16 @@ pub fn add_encoder<W: Write>(
             let options = get_lzma2_options(method_config.options.as_ref(), &mut def_opts);
             let lz = LZMA2Writer::new(input, options);
             Ok(Encoder::LZMA2(lz))
+        }
+        #[cfg(feature = "bzip2")]
+        SevenZMethod::ID_BZIP2 => {
+            let level = match method_config.options.as_ref() {
+                Some(MethodOptions::BZIP2(options)) => options.0,
+                _ => 6,
+            };
+
+            let bzip2_decoder = bzip2::write::BzEncoder::new(input, bzip2::Compression::new(level));
+            Ok(Encoder::BZIP2(bzip2_decoder))
         }
         #[cfg(feature = "zstd")]
         SevenZMethod::ID_ZSTD => {

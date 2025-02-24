@@ -8,7 +8,7 @@ use tempfile::*;
 fn compress_empty_file() {
     let temp_dir = tempdir().unwrap();
     let source = temp_dir.path().join("empty.txt");
-    std::fs::File::create(&source).unwrap();
+    File::create(&source).unwrap();
     let dest = temp_dir.path().join("empty.7z");
     compress_to_path(source, &dest).expect("compress ok");
 
@@ -162,9 +162,7 @@ fn compress_one_file_with_random_content_encrypted() {
     }
 }
 
-#[cfg(feature = "compress")]
-#[test]
-fn compress_with_copy_algorithm() {
+fn test_compression_method(method: SevenZMethod) {
     let mut ipsum_content = Vec::new();
     File::open("tests/resources/ipsum.txt")
         .unwrap()
@@ -180,7 +178,7 @@ fn compress_with_copy_algorithm() {
         let file = SevenZArchiveEntry::new_file("data/test.txt");
 
         writer.push_archive_entry::<&[u8]>(folder, None).unwrap();
-        writer.set_content_methods(vec![SevenZMethodConfiguration::new(SevenZMethod::COPY)]);
+        writer.set_content_methods(vec![SevenZMethodConfiguration::new(method)]);
         writer
             .push_archive_entry(file, Some(ipsum_content.as_slice()))
             .unwrap();
@@ -212,53 +210,32 @@ fn compress_with_copy_algorithm() {
     assert_eq!(ipsum_content.as_slice(), data.as_slice());
 }
 
+#[cfg(feature = "compress")]
+#[test]
+fn compress_with_copy_algorithm() {
+    test_compression_method(SevenZMethod::COPY);
+}
+
+#[cfg(feature = "compress")]
+#[test]
+fn compress_with_lzma_algorithm() {
+    test_compression_method(SevenZMethod::LZMA);
+}
+
+#[cfg(feature = "compress")]
+#[test]
+fn compress_with_lzma2_algorithm() {
+    test_compression_method(SevenZMethod::LZMA2);
+}
+
+#[cfg(feature = "bzip2")]
+#[test]
+fn compress_with_bzip2_algorithm() {
+    test_compression_method(SevenZMethod::BZIP2);
+}
+
 #[cfg(feature = "zstd")]
 #[test]
 fn compress_with_zstd_algorithm() {
-    let mut ipsum_content = Vec::new();
-    File::open("tests/resources/ipsum.txt")
-        .unwrap()
-        .read_to_end(&mut ipsum_content)
-        .unwrap();
-
-    let mut bytes = Vec::new();
-
-    {
-        let mut writer = SevenZWriter::new(Cursor::new(&mut bytes)).unwrap();
-
-        let folder = SevenZArchiveEntry::new_folder("data");
-        let file = SevenZArchiveEntry::new_file("data/test.txt");
-
-        writer.push_archive_entry::<&[u8]>(folder, None).unwrap();
-        writer.set_content_methods(vec![SevenZMethodConfiguration::new(SevenZMethod::ZSTD)
-            .with_options(MethodOptions::ZSTD(ZStandardOptions::from_level(3)))]);
-        writer
-            .push_archive_entry(file, Some(ipsum_content.as_slice()))
-            .unwrap();
-        writer.finish().unwrap();
-    }
-
-    let mut reader = SevenZReader::new(
-        Cursor::new(bytes.as_slice()),
-        bytes.len() as u64,
-        Password::empty(),
-    )
-    .unwrap();
-
-    assert_eq!(reader.archive().files.len(), 2);
-
-    assert!(reader
-        .archive()
-        .files
-        .iter()
-        .any(|file| file.name() == "data"));
-    assert!(reader
-        .archive()
-        .files
-        .iter()
-        .any(|file| file.name() == "data/test.txt"));
-
-    let data = reader.read_file("data/test.txt").unwrap();
-
-    assert_eq!(ipsum_content.as_slice(), data.as_slice());
+    test_compression_method(SevenZMethod::ZSTD);
 }

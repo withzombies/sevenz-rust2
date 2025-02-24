@@ -16,11 +16,24 @@ impl ZStandardOptions {
     }
 }
 
+#[cfg(feature = "bzip2")]
+#[derive(Debug, Copy, Clone)]
+pub struct Bzip2Options(pub(crate) u32);
+
+#[cfg(feature = "bzip2")]
+impl Bzip2Options {
+    pub const fn from_level(level: u32) -> Self {
+        Self(level)
+    }
+}
+
 #[derive(Debug, Clone)]
 pub enum MethodOptions {
     Num(u32),
     #[cfg(feature = "compress")]
     LZMA2(LZMA2Options),
+    #[cfg(feature = "bzip2")]
+    BZIP2(Bzip2Options),
     #[cfg(feature = "zstd")]
     ZSTD(ZStandardOptions),
     #[cfg(feature = "aes256")]
@@ -58,6 +71,13 @@ impl From<u32> for MethodOptions {
 impl From<LZMA2Options> for MethodOptions {
     fn from(o: LZMA2Options) -> Self {
         Self::LZMA2(o)
+    }
+}
+
+#[cfg(feature = "bzip2")]
+impl From<Bzip2Options> for MethodOptions {
+    fn from(o: Bzip2Options) -> Self {
+        Self::BZIP2(o)
     }
 }
 

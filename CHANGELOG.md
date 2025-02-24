@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Optional support for compressing with ZStandard
+- Optional support for compressing with bzip2
 
 ### Changed
 

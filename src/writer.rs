@@ -102,7 +102,7 @@ impl<W: Write + Seek> SevenZWriter<W> {
 
     /// Sets the default compression methods to use for entry contents.
     ///
-    /// Currently only the COPY and LZMA2 and optionally ZStandard compression algorithm
+    /// Currently only the COPY and LZMA2 and optionally bzip2 and ZStandard compression algorithm
     /// are supported.
     ///
     /// The default is LZMA2.
