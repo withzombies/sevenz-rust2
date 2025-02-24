@@ -8,7 +8,7 @@ project.
 
 The LZMA/LZMA2 decoder and all filters code was ported from [tukaani xz for java](https://tukaani.org/xz/java.html)
 
-This is a fork of the original, unmaintained lzma-rust to continue the development and maintenance.
+This is a fork of the original, unmaintained sevenz-rust crate to continue the development and maintenance.
 
 ## Decompression
 

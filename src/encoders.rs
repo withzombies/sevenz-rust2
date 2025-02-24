@@ -12,6 +12,7 @@ use crate::{
 
 #[allow(clippy::upper_case_acronyms)]
 pub enum Encoder<W: Write> {
+    COPY(CountingWriter<W>),
     LZMA(LZMAWriter<W>),
     LZMA2(LZMA2Writer<W>),
     #[cfg(feature = "aes256")]
@@ -21,6 +22,7 @@ pub enum Encoder<W: Write> {
 impl<W: Write> Write for Encoder<W> {
     fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
         match self {
+            Encoder::COPY(w) => w.write(buf),
             Encoder::LZMA(w) => w.write(buf),
             Encoder::LZMA2(w) => w.write(buf),
             #[cfg(feature = "aes256")]
@@ -30,6 +32,7 @@ impl<W: Write> Write for Encoder<W> {
 
     fn flush(&mut self) -> std::io::Result<()> {
         match self {
+            Encoder::COPY(w) => w.flush(),
             Encoder::LZMA(w) => w.flush(),
             Encoder::LZMA2(w) => w.flush(),
             #[cfg(feature = "aes256")]
@@ -45,6 +48,7 @@ pub fn add_encoder<W: Write>(
     let method = method_config.method;
 
     match method.id() {
+        SevenZMethod::ID_COPY => Ok(Encoder::COPY(input)),
         SevenZMethod::ID_LZMA => {
             let mut def_opts = LZMA2Options::default();
             let options = get_lzma2_options(method_config.options.as_ref(), &mut def_opts);
@@ -54,7 +58,6 @@ pub fn add_encoder<W: Write>(
         SevenZMethod::ID_LZMA2 => {
             let mut def_opts = LZMA2Options::default();
             let options = get_lzma2_options(method_config.options.as_ref(), &mut def_opts);
-
             let lz = LZMA2Writer::new(input, options);
             Ok(Encoder::LZMA2(lz))
         }
@@ -64,7 +67,6 @@ pub fn add_encoder<W: Write>(
                 Some(MethodOptions::Aes(p)) => p,
                 _ => return Err(Error::PasswordRequired),
             };
-
             Ok(Encoder::AES(Aes256Sha256Encoder::new(input, options)?))
         }
         _ => Err(Error::UnsupportedCompressionMethod(

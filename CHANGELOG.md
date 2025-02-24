@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-### 0.7.0 unreleased
+### 0.7.0 - 2025-02-24
 
 This release should be mostly compatible with the old 0.6.1. The breaking changes are:
 
@@ -16,6 +16,7 @@ This release should be mostly compatible with the old 0.6.1. The breaking change
 
 - `SevenZReader::readFile()` added
 - `SevenZArchiveEntry::new_file()` and `SevenZArchiveEntry::new_folder()` factory functions added
+- Compression method COPY is now supported
 
 ### Changed
 
@@ -35,16 +36,16 @@ This release should be mostly compatible with the old 0.6.1. The breaking change
 - Removed deprecated `FolderDecoder`. Use `BlockDecoder` instead
 - Removed deprecated `SevenZWriter::create_archive_entry()`. Use `SevenZArchiveEntry::from_path()` instead
 
-### 0.6.1 2024-0717
+### 0.6.1 - 2024-07-17
 
 - Fixed 'unsafe precondition(s) violated'. Closed #63
 
-### 0.6.0 2024-0405
+### 0.6.0 - 2024-04-05
 
 - Added support for encrypted headers - close #55
 - Return a consistent error in case the password is invalid - close #53
 
-### 0.5.4 2023-1213
+### 0.5.4 - 2023-12-13
 
 - Added docs
 - Renamed `FolderDecoder` to `BlockDecoder`
@@ -56,20 +57,20 @@ This release should be mostly compatible with the old 0.6.1. The breaking change
 Fixed 'Too many open files'
 Reduce unnecessary public items #37
 
-### 0.5.2 - 2023-0824
+### 0.5.2 - 2023-08-24
 
 Fixed file separator issue on Windows system #35
 
-### 0.5.1 - 2023-0823
+### 0.5.1 - 2023-08-23
 
 Sub crate `lzma-rust` code optimization
 
-### 0.5.0 - 2023-0819
+### 0.5.0 - 2023-08-19
 
 - Added support for BCJ2.
 - Added multi-thread decompress example
 
-### 0.4.3 - 2023-0616
+### 0.4.3 - 2023-06-16
 
 - Support write encoded header
 - Added `LZMAWriter`

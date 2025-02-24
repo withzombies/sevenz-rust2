@@ -3,7 +3,7 @@
 
 LZMA/LZMA2 codec ported from [tukaani xz for java](https://tukaani.org/xz/java.html).
 
-This is a fork of the original, unmaintained lzma-rust to continue the development and maintenance.
+This is a fork of the original, unmaintained lzma-rust crate to continue the development and maintenance.
 
 ## Usage
 

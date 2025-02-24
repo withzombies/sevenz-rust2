@@ -1,4 +1,6 @@
 use sevenz_rust2::*;
+use std::fs::File;
+use std::io::{Cursor, Read};
 use tempfile::*;
 
 #[cfg(feature = "compress")]
@@ -158,4 +160,54 @@ fn compress_one_file_with_random_content_encrypted() {
 
         assert_eq!(std::fs::read_to_string(&decompress_file).unwrap(), content);
     }
+}
+
+#[cfg(feature = "compress")]
+#[test]
+fn compress_with_copy_algorithm() {
+    let mut ipsum_content = Vec::new();
+    File::open("tests/resources/ipsum.txt")
+        .unwrap()
+        .read_to_end(&mut ipsum_content)
+        .unwrap();
+
+    let mut bytes = Vec::new();
+
+    {
+        let mut writer = SevenZWriter::new(Cursor::new(&mut bytes)).unwrap();
+
+        let folder = SevenZArchiveEntry::new_folder("data");
+        let file = SevenZArchiveEntry::new_file("data/test.txt");
+
+        writer.push_archive_entry::<&[u8]>(folder, None).unwrap();
+        writer.set_content_methods(vec![SevenZMethodConfiguration::new(SevenZMethod::COPY)]);
+        writer
+            .push_archive_entry(file, Some(ipsum_content.as_slice()))
+            .unwrap();
+        writer.finish().unwrap();
+    }
+
+    let mut reader = SevenZReader::new(
+        Cursor::new(bytes.as_slice()),
+        bytes.len() as u64,
+        Password::empty(),
+    )
+    .unwrap();
+
+    assert_eq!(reader.archive().files.len(), 2);
+
+    assert!(reader
+        .archive()
+        .files
+        .iter()
+        .any(|file| file.name() == "data"));
+    assert!(reader
+        .archive()
+        .files
+        .iter()
+        .any(|file| file.name() == "data/test.txt"));
+
+    let data = reader.read_file("data/test.txt").unwrap();
+
+    assert_eq!(ipsum_content.as_slice(), data.as_slice());
 }
