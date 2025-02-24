@@ -1,7 +1,9 @@
 use crate::{archive::*, decoders::add_decoder, error::Error, folder::*, password::Password};
 use bit_set::BitSet;
 use crc32fast::Hasher;
+use std::cell::RefCell;
 use std::collections::HashMap;
+use std::rc::Rc;
 use std::{
     fs::File,
     io::{ErrorKind, Read, Seek, SeekFrom},
@@ -1236,7 +1238,7 @@ impl<R: Read + Seek> SevenZReader<R> {
         }
 
         assert!(folder.total_input_streams > folder.total_output_streams);
-        let source = ReaderPtr::new(source);
+        let source = ReaderPointer::new(source);
         let first_pack_stream_index =
             archive.stream_map.folder_first_pack_stream_index[folder_index];
         let start_pos = SIGNATURE_HEADER_SIZE + archive.pack_pos;
@@ -1311,7 +1313,7 @@ impl<R: Read + Seek> SevenZReader<R> {
 
     fn get_in_stream<'r>(
         folder: &Folder,
-        sources: &[SeekableBoundedReader<ReaderPtr<R>>],
+        sources: &[SeekableBoundedReader<ReaderPointer<'r, R>>],
         coder_to_stream_map: &[usize],
         password: &[u8],
 
@@ -1343,7 +1345,7 @@ impl<R: Read + Seek> SevenZReader<R> {
 
     fn get_in_stream2<'r>(
         folder: &Folder,
-        sources: &[SeekableBoundedReader<ReaderPtr<R>>],
+        sources: &[SeekableBoundedReader<ReaderPointer<'r, R>>],
         coder_to_stream_map: &[usize],
         password: &[u8],
         in_stream_index: usize,
@@ -1564,35 +1566,30 @@ impl<'a, R: Read + Seek> BlockDecoder<'a, R> {
     }
 }
 
-#[derive(Debug, Copy)]
-struct ReaderPtr<R> {
-    reader: *mut R,
-}
+#[derive(Debug)]
+#[repr(transparent)]
+struct ReaderPointer<'a, R>(Rc<RefCell<&'a mut R>>);
 
-impl<R> Clone for ReaderPtr<R> {
+impl<R> Clone for ReaderPointer<'_, R> {
     fn clone(&self) -> Self {
-        Self {
-            reader: self.reader,
-        }
+        Self(Rc::clone(&self.0))
     }
 }
 
-impl<R> ReaderPtr<R> {
-    fn new(reader: &mut R) -> Self {
-        Self {
-            reader: reader as *mut R,
-        }
+impl<'a, R> ReaderPointer<'a, R> {
+    fn new(reader: &'a mut R) -> Self {
+        Self(Rc::new(RefCell::new(reader)))
     }
 }
 
-impl<R: Read> Read for ReaderPtr<R> {
+impl<R: Read> Read for ReaderPointer<'_, R> {
     fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
-        unsafe { (*self.reader).read(buf) }
+        self.0.borrow_mut().read(buf)
     }
 }
 
-impl<R: Seek> Seek for ReaderPtr<R> {
+impl<R: Seek> Seek for ReaderPointer<'_, R> {
     fn seek(&mut self, pos: SeekFrom) -> std::io::Result<u64> {
-        unsafe { (*self.reader).seek(pos) }
+        self.0.borrow_mut().seek(pos)
     }
 }
