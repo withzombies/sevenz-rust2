@@ -1,30 +1,35 @@
-[![Crate](https://img.shields.io/crates/v/sevenz-rust.svg)](https://crates.io/crates/sevenz-rust)
- [![Documentation](https://docs.rs/sevenz-rust/badge.svg)](https://docs.rs/sevenz-rust)
- 
-This project is a 7z compressor/decompressor written in pure rust.
+[![Crate](https://img.shields.io/crates/v/sevenz-rust2.svg)](https://crates.io/crates/sevenz-rust2)
+[![Documentation](https://docs.rs/sevenz-rust2/badge.svg)](https://docs.rs/sevenz-rust2)
 
-And it's very much inspired by the [apache commons-compress](https://commons.apache.org/proper/commons-compress/) project.
+This project is a 7z compressor/decompressor written in pure Rust.
+
+And it's very much inspired by the [apache commons-compress](https://commons.apache.org/proper/commons-compress/)
+project.
 
 The LZMA/LZMA2 decoder and all filters code was ported from [tukaani xz for java](https://tukaani.org/xz/java.html)
+
+This is a fork of the original, unmaintained lzma-rust to continue the development and maintenance.
 
 ## Decompression
 
 Supported codecs:
- - [x] BZIP2 (requires feature 'bzip2')
- - [x] COPY
- - [x] LZMA
- - [x] LZMA2
- - [x] ZSTD  (requires feature 'zstd')
+
+- [x] BZIP2 (requires feature 'bzip2')
+- [x] COPY
+- [x] LZMA
+- [x] LZMA2
+- [x] ZSTD  (requires feature 'zstd')
 
 Supported filters:
- - [x] BCJ X86
- - [x] BCJ PPC
- - [x] BCJ IA64
- - [x] BCJ ARM
- - [x] BCJ ARM_THUMB
- - [x] BCJ SPARC
- - [x] DELTA
- - [x] BJC2
+
+- [x] BCJ X86
+- [x] BCJ PPC
+- [x] BCJ IA64
+- [x] BCJ ARM
+- [x] BCJ ARM_THUMB
+- [x] BCJ SPARC
+- [x] DELTA
+- [x] BJC2
 
 ### Usage
 
@@ -54,7 +59,7 @@ sevenz_rust::decompress_file_with_password("path/to/encrypted.7z", "path/to/outp
 
 #### Multi-thread decompress
 
-Please check [examples/mt_decompress](https://github.com/dyz1990/sevenz-rust/blob/main/examples/mt_decompress.rs)
+Please check [examples/mt_decompress](https://github.com/hasenbanck/sevenz-rust2/blob/main/examples/mt_decompress.rs)
 
 ## Compression
 
@@ -97,7 +102,7 @@ sevenz-rust = { version = "0.6", features = ["compress", "aes256"] }
 use sevenz_rust::*;
 
 let mut sz = SevenZWriter::create("dest.7z").expect("create writer ok");
-sz.push_source_path("path/to/compress", |_| true).expect("pack ok");
+sz.push_source_path("path/to/compress", | _ | true).expect("pack ok");
 sz.finish().expect("compress ok");
 ```
 
@@ -113,7 +118,7 @@ sz.set_content_methods(vec![
     sevenz_rust::AesEncoderOptions::new("sevenz-rust".into()).into(),
     lzma::LZMA2Options::with_preset(9).into(),
 ]);
-sz.push_source_path("path/to/compress", |_| true).expect("pack ok");
+sz.push_source_path("path/to/compress", | _ | true).expect("pack ok");
 sz.finish().expect("compress ok");
 ```
 

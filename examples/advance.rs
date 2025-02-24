@@ -2,7 +2,7 @@ use std::{collections::HashMap, env::temp_dir, time::Instant};
 
 use lzma::LZMA2Options;
 use rand::Rng;
-use sevenz_rust::*;
+use sevenz_rust2::*;
 
 fn main() {
     let temp_dir = temp_dir();

@@ -1,7 +1,8 @@
 use std::{fs::File, io::Write, path::PathBuf};
 
 fn main() {
-    let mut sz = sevenz_rust::SevenZReader::open("examples/data/sample.7z", "pass".into()).unwrap();
+    let mut sz =
+        sevenz_rust2::SevenZReader::open("examples/data/sample.7z", "pass".into()).unwrap();
     let total_size: u64 = sz
         .archive()
         .files

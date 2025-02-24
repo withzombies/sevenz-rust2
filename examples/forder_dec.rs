@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use sevenz_rust::{Archive, BlockDecoder, Password};
+use sevenz_rust2::{Archive, BlockDecoder, Password};
 
 fn main() {
     let mut file = std::fs::File::open("examples/data/sample.7z").unwrap();
@@ -28,7 +28,7 @@ fn main() {
                 if entry.name() == my_file_name {
                     //only extract the file we want
                     let dest = dest.join(entry.name());
-                    sevenz_rust::default_entry_extract_fn(entry, reader, &dest)?;
+                    sevenz_rust2::default_entry_extract_fn(entry, reader, &dest)?;
                 } else {
                     //skip other files
                     std::io::copy(reader, &mut std::io::sink())?;

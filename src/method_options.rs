@@ -1,5 +1,5 @@
 #[cfg(feature = "compress")]
-use lzma_rust::LZMA2Options;
+use lzma_rust2::LZMA2Options;
 
 #[cfg(feature = "aes256")]
 use crate::aes256sha256::AesEncoderOptions;

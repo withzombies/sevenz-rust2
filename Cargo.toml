@@ -1,12 +1,12 @@
 [package]
-description = "A 7z decompressor/compressor written in pure rust"
+description = "A 7z decompressor/compressor written in pure Rust"
 edition = "2021"
-homepage = "https://github.com/dyz1990/sevenz-rust"
+homepage = "https://github.com/hasenbanck/sevenz-rust2"
 keywords = ["7z", "7zip", "sevenz", "decompress"]
 license = "Apache-2.0"
-name = "sevenz-rust"
+name = "sevenz-rust2"
 readme = "README.md"
-repository = "https://github.com/dyz1990/sevenz-rust"
+repository = "https://github.com/hasenbanck/sevenz-rust"
 rust-version = "1.74.0"
 version = "0.7.0"
 
@@ -17,7 +17,7 @@ crate-type = ["cdylib", "rlib"]
 default = ["compress"]
 aes256 = ["dep:aes", "dep:cbc", "dep:getrandom"]
 bzip2 = ["dep:bzip2"]
-compress = ["lzma-rust/encoder"]
+compress = ["lzma-rust2/encoder"]
 
 [dependencies]
 aes = { version = "0.8", optional = true }
@@ -28,7 +28,7 @@ getrandom = { version = "0.3", optional = true }
 cbc = { version = "0.1", optional = true }
 crc32fast = "1.4"
 filetime_creation = "0.2"
-lzma-rust = { path = "lzma-rust", default-features = false, version = "0.1.7" }
+lzma-rust2 = { path = "lzma-rust2", default-features = false, version = "0.1.7" }
 nt-time = "0.10"
 sha2 = { version = "^0.10" }
 zstd = { version = "0.13", optional = true }

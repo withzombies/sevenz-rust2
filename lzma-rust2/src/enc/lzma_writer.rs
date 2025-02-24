@@ -11,7 +11,7 @@ use super::encoder::{LZMAEncoder, LZMAEncoderModes};
 /// # Examples
 /// ```
 /// use std::io::Write;
-/// use lzma_rust::{CountingWriter, LZMA2Options, LZMAWriter};
+/// use lzma_rust2::{CountingWriter, LZMA2Options, LZMAWriter};
 ///
 /// let s = b"Hello, world!";
 /// let mut out = Vec::new();

@@ -4,7 +4,7 @@ use std::{
 };
 use tempfile::tempdir;
 
-use sevenz_rust::{decompress_file, Archive, BlockDecoder, Password, SevenZReader};
+use sevenz_rust2::{decompress_file, Archive, BlockDecoder, Password, SevenZReader};
 
 #[test]
 fn decompress_single_empty_file_unencoded_header() {

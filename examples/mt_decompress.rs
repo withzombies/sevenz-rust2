@@ -1,6 +1,6 @@
 use std::{path::PathBuf, sync::Arc};
 
-use sevenz_rust::{Archive, BlockDecoder, Password};
+use sevenz_rust2::{Archive, BlockDecoder, Password};
 
 fn main() {
     let time = std::time::Instant::now();
@@ -29,7 +29,7 @@ fn main() {
             forder_dec
                 .for_each_entries(&mut |entry, reader| {
                     let dest = dest.join(entry.name());
-                    sevenz_rust::default_entry_extract_fn(entry, reader, &dest)?;
+                    sevenz_rust2::default_entry_extract_fn(entry, reader, &dest)?;
                     Ok(true)
                 })
                 .expect("ok");

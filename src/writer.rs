@@ -123,7 +123,7 @@ impl<W: Write + Seek> SevenZWriter<W> {
     /// Adds an archive `entry` with data from `reader`
     /// # Examples
     /// ```no_run
-    /// use sevenz_rust::*;
+    /// use sevenz_rust2::*;
     /// use std::fs::File;
     /// use std::path::Path;
     /// let mut sz = SevenZWriter::create("path/to/dest.7z").expect("create writer ok");

@@ -5,7 +5,7 @@ use std::path::{Path, PathBuf};
 /// decompress a 7z file
 /// # Example
 /// ```no_run
-/// sevenz_rust::decompress_file("sample.7z", "sample").expect("complete");
+/// sevenz_rust2::decompress_file("sample.7z", "sample").expect("complete");
 /// ```
 ///
 #[inline]
@@ -46,7 +46,7 @@ pub fn decompress_with_extract_fn<R: Read + Seek>(
 /// decompress a encrypted file with password
 /// # Example
 /// ```no_run
-/// sevenz_rust::decompress_file_with_password("sample.7z", "sample", "password".into()).expect("complete");
+/// sevenz_rust2::decompress_file_with_password("sample.7z", "sample", "password".into()).expect("complete");
 /// ```
 #[inline]
 pub fn decompress_file_with_password(

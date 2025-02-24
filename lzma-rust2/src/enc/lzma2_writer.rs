@@ -147,7 +147,7 @@ pub fn get_extra_size_before(dict_size: u32) -> u32 {
 /// # Examples
 /// ```
 /// use std::io::Write;
-/// use lzma_rust::{LZMA2Options, LZMA2Writer, CountingWriter};
+/// use lzma_rust2::{LZMA2Options, LZMA2Writer, CountingWriter};
 ///
 /// let mut writer = LZMA2Writer::new(CountingWriter::new(Vec::new()), &LZMA2Options::default());
 ///    writer.write_all(b"hello world").unwrap();

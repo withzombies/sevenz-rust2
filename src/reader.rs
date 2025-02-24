@@ -165,7 +165,7 @@ impl Archive {
     /// ```no_run
     /// use std::io::{Read,Seek};
     /// use std::fs::File;
-    /// use sevenz_rust::*;
+    /// use sevenz_rust2::*;
     /// let mut reader = File::open("example.7z").unwrap();
     /// let len = reader.metadata().unwrap().len();
     ///
@@ -1375,10 +1375,8 @@ impl<R: Read + Seek> SevenZReader<R> {
     /// When decoding a solid archive, the data to be decompressed depends on the data in front of it,
     /// you cannot simply skip the previous data and only decompress the data in the back.
     ///
-    /// See [ChecksumVerificationFailed](https://github.com/dyz1990/sevenz-rust/issues/31).
-    ///
-    /// To speed up decompression, you can check this example [examples/forder_dec.rs](https://github.com/dyz1990/sevenz-rust/blob/main/examples/forder_dec.rs).
-    /// And this example [mt_decompress.rs](https://github.com/dyz1990/sevenz-rust/blob/main/examples/mt_decompress.rs) if you want use multi-thread.
+    /// To speed up decompression, you can check this example [examples/forder_dec.rs](https://github.com/hasenbanck/sevenz-rust2/blob/main/examples/forder_dec.rs).
+    /// And this example [mt_decompress.rs](https://github.com/hasenbanck/sevenz-rust2/blob/main/examples/mt_decompress.rs) if you want use multi-thread.
     pub fn for_each_entries<F: FnMut(&SevenZArchiveEntry, &mut dyn Read) -> Result<bool, Error>>(
         &mut self,
         mut each: F,
@@ -1521,10 +1519,8 @@ impl<'a, R: Read + Seek> BlockDecoder<'a, R> {
     /// When decoding files in a block, the data to be decompressed depends on the data in front of it,
     /// you cannot simply skip the previous data and only decompress the data in the back.
     ///
-    /// See [ChecksumVerificationFailed](https://github.com/dyz1990/sevenz-rust/issues/31).
-    ///
-    /// To speed up decompression, you can check this example [examples/forder_dec.rs](https://github.com/dyz1990/sevenz-rust/blob/main/examples/forder_dec.rs).
-    /// And this example [mt_decompress.rs](https://github.com/dyz1990/sevenz-rust/blob/main/examples/mt_decompress.rs) if you want use multi-thread.
+    /// To speed up decompression, you can check this example [examples/forder_dec.rs](https://github.com/hasenbanck/sevenz-rust2/blob/main/examples/forder_dec.rs).
+    /// And this example [mt_decompress.rs](https://github.com/hasenbanck/sevenz-rust2/blob/main/examples/mt_decompress.rs) if you want use multi-thread.
     pub fn for_each_entries<F: FnMut(&SevenZArchiveEntry, &mut dyn Read) -> Result<bool, Error>>(
         self,
         each: &mut F,

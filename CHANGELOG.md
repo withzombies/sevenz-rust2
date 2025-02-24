@@ -7,11 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 0.7.0 unreleased
 
-### Fixed
+This release should be mostly compatible with the old 0.6.1. The breaking changes are:
 
-- Replaces insecure usage of rand with getrandom
-- Renamed `get_memery_usage()` into `get_memory_usage()`
-- Renamed `compress_encypted()` into `compress_encrypted()`
+- Previously deprecated functionality were removed
+- Spelling issues were fixed in some API names
+
+### Added
+
+- `SevenZReader::readFile()` added
+- `SevenZArchiveEntry::new_file()` and `SevenZArchiveEntry::new_folder()` factory functions added
 
 ### Changed
 
@@ -19,6 +23,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated dependency bzip2 v0.5
 - Updated dependency nt-time v0.10
 - Use crc32fast instead of crc
+
+### Fixed
+
+- Replaces insecure usage of rand with getrandom
+- Renamed `get_memery_usage()` into `get_memory_usage()`
+- Renamed `compress_encypted()` into `compress_encrypted()`
 
 ### Removed
 

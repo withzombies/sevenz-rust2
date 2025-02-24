@@ -29,7 +29,7 @@ pub use de_funcs::*;
 #[cfg(feature = "compress")]
 pub use en_funcs::*;
 pub use error::Error;
-pub use lzma_rust as lzma;
+pub use lzma_rust2 as lzma;
 pub use method_options::*;
 pub use nt_time;
 pub use password::Password;

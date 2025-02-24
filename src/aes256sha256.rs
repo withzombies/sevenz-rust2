@@ -4,7 +4,7 @@ use std::io::{Read, Seek, Write};
 pub use self::enc::*;
 use crate::Password;
 use aes::cipher::{generic_array::GenericArray, BlockDecryptMut, BlockEncryptMut, KeyIvInit};
-use lzma_rust::CountingWriter;
+use lzma_rust2::CountingWriter;
 use sha2::Digest;
 
 type Aes256CbcDec = cbc::Decryptor<aes::Aes256>;

@@ -1,7 +1,7 @@
 #[cfg(feature = "aes256")]
 #[test]
 fn test_decompress_file_with_password() {
-    use sevenz_rust::decompress_file_with_password;
+    use sevenz_rust2::decompress_file_with_password;
     use std::{fs::read_to_string, path::PathBuf};
     use tempfile::tempdir;
 
