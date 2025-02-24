@@ -17,6 +17,7 @@ This is a fork of the original, unmaintained sevenz-rust crate to continue the d
 | COPY        | ✓             | ✓           |
 | LZMA        | ✓             | ✓           |
 | LZMA2       | ✓             | ✓           |
+| BROTLI (*)  | ✓             | ✓           |
 | BZIP2 (*)   | ✓             | ✓           |
 | DEFLATE (*) | ✓             | ✓           |
 | ZSTD (*)    | ✓             | ✓           |

@@ -23,6 +23,8 @@ pub enum Decoder<R: Read> {
     LZMA2(LZMA2Reader<R>),
     BCJ(SimpleReader<R>),
     Delta(DeltaReader<R>),
+    #[cfg(feature = "brotli")]
+    Brotli(brotli::Decompressor<R>),
     #[cfg(feature = "bzip2")]
     BZip2(BzDecoder<R>),
     #[cfg(feature = "deflate")]
@@ -41,6 +43,8 @@ impl<R: Read> Read for Decoder<R> {
             Decoder::LZMA2(r) => r.read(buf),
             Decoder::BCJ(r) => r.read(buf),
             Decoder::Delta(r) => r.read(buf),
+            #[cfg(feature = "brotli")]
+            Decoder::Brotli(r) => r.read(buf),
             #[cfg(feature = "bzip2")]
             Decoder::BZip2(r) => r.read(buf),
             #[cfg(feature = "deflate")]
@@ -93,6 +97,11 @@ pub fn add_decoder<I: Read>(
             }
             let lz = LZMA2Reader::new(input, dic_size, None);
             Ok(Decoder::LZMA2(lz))
+        }
+        #[cfg(feature = "brotli")]
+        SevenZMethod::ID_BROTLI => {
+            let de = brotli::Decompressor::new(input, 4096);
+            Ok(Decoder::Brotli(de))
         }
         #[cfg(feature = "bzip2")]
         SevenZMethod::ID_BZIP2 => {

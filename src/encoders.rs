@@ -14,6 +14,8 @@ pub enum Encoder<W: Write> {
     COPY(CountingWriter<W>),
     LZMA(LZMAWriter<W>),
     LZMA2(LZMA2Writer<W>),
+    #[cfg(feature = "brotli")]
+    BROTLI(brotli::CompressorWriter<CountingWriter<W>>),
     #[cfg(feature = "bzip2")]
     BZIP2(bzip2::write::BzEncoder<CountingWriter<W>>),
     #[cfg(feature = "deflate")]
@@ -30,6 +32,8 @@ impl<W: Write> Write for Encoder<W> {
             Encoder::COPY(w) => w.write(buf),
             Encoder::LZMA(w) => w.write(buf),
             Encoder::LZMA2(w) => w.write(buf),
+            #[cfg(feature = "brotli")]
+            Encoder::BROTLI(w) => w.write(buf),
             #[cfg(feature = "bzip2")]
             Encoder::BZIP2(w) => w.write(buf),
             #[cfg(feature = "deflate")]
@@ -46,6 +50,8 @@ impl<W: Write> Write for Encoder<W> {
             Encoder::COPY(w) => w.flush(),
             Encoder::LZMA(w) => w.flush(),
             Encoder::LZMA2(w) => w.flush(),
+            #[cfg(feature = "brotli")]
+            Encoder::BROTLI(w) => w.flush(),
             #[cfg(feature = "bzip2")]
             Encoder::BZIP2(w) => w.flush(),
             #[cfg(feature = "deflate")]
@@ -78,6 +84,16 @@ pub fn add_encoder<W: Write>(
             let lz = LZMA2Writer::new(input, options);
             Ok(Encoder::LZMA2(lz))
         }
+        #[cfg(feature = "brotli")]
+        SevenZMethod::ID_BROTLI => {
+            let (quality, window) = match method_config.options.as_ref() {
+                Some(MethodOptions::BROTLI(options)) => (options.quality, options.window),
+                _ => (11, 22),
+            };
+
+            let brotli_encoder = brotli::CompressorWriter::new(input, 4096, quality, window);
+            Ok(Encoder::BROTLI(brotli_encoder))
+        }
         #[cfg(feature = "bzip2")]
         SevenZMethod::ID_BZIP2 => {
             let level = match method_config.options.as_ref() {
@@ -85,8 +101,8 @@ pub fn add_encoder<W: Write>(
                 _ => 6,
             };
 
-            let bzip2_decoder = bzip2::write::BzEncoder::new(input, bzip2::Compression::new(level));
-            Ok(Encoder::BZIP2(bzip2_decoder))
+            let bzip2_encoder = bzip2::write::BzEncoder::new(input, bzip2::Compression::new(level));
+            Ok(Encoder::BZIP2(bzip2_encoder))
         }
         #[cfg(feature = "deflate")]
         SevenZMethod::ID_DEFLATE => {
@@ -95,9 +111,9 @@ pub fn add_encoder<W: Write>(
                 _ => 6,
             };
 
-            let deflate_decoder =
+            let deflate_encoder =
                 flate2::write::DeflateEncoder::new(input, flate2::Compression::new(level));
-            Ok(Encoder::DEFLATE(deflate_decoder))
+            Ok(Encoder::DEFLATE(deflate_encoder))
         }
         #[cfg(feature = "zstd")]
         SevenZMethod::ID_ZSTD => {
@@ -105,8 +121,8 @@ pub fn add_encoder<W: Write>(
                 Some(MethodOptions::ZSTD(options)) => options.0,
                 _ => 3,
             };
-            let zstd_decoder = zstd::Encoder::new(input, level).map_err(Error::io)?;
-            Ok(Encoder::ZSTD(zstd_decoder))
+            let zstd_encoder = zstd::Encoder::new(input, level).map_err(Error::io)?;
+            Ok(Encoder::ZSTD(zstd_encoder))
         }
         #[cfg(feature = "aes256")]
         SevenZMethod::ID_AES256SHA256 => {

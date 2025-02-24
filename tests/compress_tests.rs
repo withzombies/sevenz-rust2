@@ -208,6 +208,7 @@ fn test_compression_method(method: SevenZMethod) {
     let data = reader.read_file("data/test.txt").unwrap();
 
     assert_eq!(ipsum_content.as_slice(), data.as_slice());
+    //std::fs::write("test.7z", bytes.as_slice()).unwrap();
 }
 
 #[cfg(feature = "compress")]
@@ -226,6 +227,12 @@ fn compress_with_lzma_algorithm() {
 #[test]
 fn compress_with_lzma2_algorithm() {
     test_compression_method(SevenZMethod::LZMA2);
+}
+
+#[cfg(feature = "brotli")]
+#[test]
+fn compress_with_brotli_algorithm() {
+    test_compression_method(SevenZMethod::BROTLI);
 }
 
 #[cfg(feature = "bzip2")]

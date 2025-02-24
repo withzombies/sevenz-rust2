@@ -16,6 +16,20 @@ impl Bzip2Options {
     }
 }
 
+#[cfg(feature = "brotli")]
+#[derive(Debug, Copy, Clone)]
+pub struct BrotliOptions {
+    pub(crate) quality: u32,
+    pub(crate) window: u32,
+}
+
+#[cfg(feature = "brotli")]
+impl BrotliOptions {
+    pub const fn from_quality_window(quality: u32, window: u32) -> Self {
+        Self { quality, window }
+    }
+}
+
 #[cfg(feature = "deflate")]
 #[derive(Debug, Copy, Clone)]
 pub struct DeflateOptions(pub(crate) u32);
@@ -43,6 +57,8 @@ pub enum MethodOptions {
     Num(u32),
     #[cfg(feature = "compress")]
     LZMA2(LZMA2Options),
+    #[cfg(feature = "brotli")]
+    BROTLI(BrotliOptions),
     #[cfg(feature = "bzip2")]
     BZIP2(Bzip2Options),
     #[cfg(feature = "deflate")]
@@ -91,6 +107,13 @@ impl From<LZMA2Options> for MethodOptions {
 impl From<Bzip2Options> for MethodOptions {
     fn from(o: Bzip2Options) -> Self {
         Self::BZIP2(o)
+    }
+}
+
+#[cfg(feature = "brotli")]
+impl From<BrotliOptions> for MethodOptions {
+    fn from(o: BrotliOptions) -> Self {
+        Self::BROTLI(o)
     }
 }
 
