@@ -10,26 +10,29 @@ The LZMA/LZMA2 decoder and all filters code was ported from [tukaani xz for java
 
 This is a fork of the original, unmaintained sevenz-rust crate to continue the development and maintenance.
 
-## Decompression
+## Supported Codecs & filters
 
-Supported codecs:
+| Codec       | Decompression | Compression |
+|-------------|---------------|-------------|
+| COPY        | ✓             | ✓           |
+| LZMA        | ✓             | ✓           |
+| LZMA2       | ✓             | ✓           |
+| BZIP2 (*)   | ✓             | ✓           |
+| DEFLATE (*) | ✓             | ✓           |
+| ZSTD (*)    | ✓             | ✓           |
 
-- [x] BZIP2 (requires feature 'bzip2')
-- [x] COPY
-- [x] LZMA
-- [x] LZMA2
-- [x] ZSTD  (requires feature 'zstd')
+(*) Require optional feature.
 
-Supported filters:
-
-- [x] BCJ X86
-- [x] BCJ PPC
-- [x] BCJ IA64
-- [x] BCJ ARM
-- [x] BCJ ARM_THUMB
-- [x] BCJ SPARC
-- [x] DELTA
-- [x] BJC2
+| Filter        | Decompression | Compression |
+|---------------|---------------|-------------|
+| BCJ X86       | ✓             |             |
+| BCJ PPC       | ✓             |             |
+| BCJ IA64      | ✓             |             |
+| BCJ ARM       | ✓             |             |
+| BCJ ARM_THUMB | ✓             |             |
+| BCJ SPARC     | ✓             |             |
+| DELTA         | ✓             |             |
+| BCJ2          | ✓             |             |
 
 ### Usage
 
@@ -62,8 +65,6 @@ sevenz_rust2::decompress_file_with_password("path/to/encrypted.7z", "path/to/out
 Please check [examples/mt_decompress](https://github.com/hasenbanck/sevenz-rust2/blob/main/examples/mt_decompress.rs)
 
 ## Compression
-
-Currently, this crate only supports the COPY, LZMA2 and optionally bzip2, DEFLATE and ZStandard compression algorithm.
 
 ```toml
 [dependencies]
