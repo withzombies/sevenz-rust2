@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Replaced all unsafe code from svenz-rust2 crate
+- sha2 is now an optional dependency that is activated when using the aes256 features
 
 ### 0.7.0 - 2025-02-24
 
