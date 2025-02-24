@@ -250,14 +250,7 @@ impl LZEncoderData {
         assert!(move_offset >= 0);
         let move_size = move_size as usize;
         let offset = move_offset as usize;
-        let end = offset + move_size;
-        unsafe {
-            std::ptr::copy(
-                self.buf[offset..end].as_ptr(),
-                self.buf[0..].as_mut_ptr(),
-                move_size,
-            );
-        }
+        self.buf.copy_within(offset..offset + move_size, 0);
         self.read_pos -= move_offset;
         self.read_limit -= move_offset;
         self.write_pos -= move_offset;

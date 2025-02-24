@@ -93,17 +93,8 @@ impl LZDecoder {
             assert_eq!(self.full, self.buf_size);
             let mut back = self.buf_size + self.pos - dist - 1;
 
-            // Here we will never copy more than dist + 1 bytes and
-            // so the copying won't repeat from its own output.
-            // Thus, we can always use std::ptr::copy safely.
             let copy_size = usize::min(self.buf_size - back, left);
-            assert!(copy_size <= dist + 1);
-            unsafe {
-                let buf_ptr = self.buf.as_mut_ptr();
-                let src = buf_ptr.add(back);
-                let dest = buf_ptr.add(self.pos);
-                std::ptr::copy(src, dest, copy_size);
-            }
+            self.buf.copy_within(back..back + copy_size, self.pos);
             self.pos += copy_size;
             back = 0;
             left -= copy_size;
@@ -121,14 +112,7 @@ impl LZDecoder {
 
         loop {
             let copy_size = left.min(self.pos - back);
-            let pos = self.pos;
-            unsafe {
-                let buf_ptr = self.buf.as_mut_ptr();
-                let src = buf_ptr.add(back);
-                let dest = buf_ptr.add(pos);
-                std::ptr::copy(src, dest, copy_size);
-            }
-
+            self.buf.copy_within(back..back + copy_size, self.pos);
             self.pos += copy_size;
             left -= copy_size;
             if left == 0 {

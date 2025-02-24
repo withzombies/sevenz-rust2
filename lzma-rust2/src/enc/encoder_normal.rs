@@ -107,13 +107,7 @@ impl NormalEncoderMode {
                 self.opts[self.opt_cur].state.update_literal();
             }
 
-            unsafe {
-                std::ptr::copy_nonoverlapping(
-                    self.opts[opt_prev].reps.as_ptr(),
-                    self.opts[self.opt_cur].reps.as_mut_ptr(),
-                    REPS,
-                );
-            }
+            self.opts[self.opt_cur].reps = self.opts[opt_prev].reps;
         } else {
             let back;
             if self.opts[self.opt_cur].prev1_is_literal && self.opts[self.opt_cur].has_prev2 {
@@ -140,13 +134,8 @@ impl NormalEncoderMode {
                 }
             } else {
                 self.opts[self.opt_cur].reps[0] = back - REPS as i32;
-                unsafe {
-                    std::ptr::copy_nonoverlapping(
-                        self.opts[opt_prev].reps.as_ptr(),
-                        self.opts[self.opt_cur].reps[1..].as_mut_ptr(),
-                        REPS - 1,
-                    );
-                }
+                let tmp: [i32; REPS] = self.opts[opt_prev].reps;
+                self.opts[self.opt_cur].reps[1..].copy_from_slice(&tmp[..3]);
             }
         }
     }
@@ -551,13 +540,7 @@ impl LZMAEncoderTrait for NormalEncoderMode {
         // updateOptStateAndReps() will need these to get the new
         // state and reps for the next byte.
         self.opts[0].state.set(encoder.state);
-        unsafe {
-            std::ptr::copy_nonoverlapping(
-                encoder.reps.as_ptr(),
-                self.opts[0].reps.as_mut_ptr(),
-                REPS,
-            );
-        }
+        self.opts[0].reps = encoder.reps;
 
         // Initialize the prices for latter opts that will be used below.
         for i in (MATCH_LEN_MIN..=self.opt_end).rev() {
