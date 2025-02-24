@@ -18,6 +18,7 @@ default = ["compress"]
 aes256 = ["dep:aes", "dep:cbc", "dep:getrandom", "dep:sha2"]
 bzip2 = ["dep:bzip2"]
 compress = ["lzma-rust2/encoder"]
+deflate = ["dep:flate2"]
 zstd = ["dep:zstd"]
 
 [dependencies]
@@ -25,10 +26,11 @@ aes = { version = "0.8", optional = true }
 bit-set = "0.8"
 byteorder = "1.5"
 bzip2 = { version = "0.5", optional = true, features = ["libbz2-rs-sys"] }
-getrandom = { version = "0.3", optional = true }
 cbc = { version = "0.1", optional = true }
 crc32fast = "1.4"
+flate2 = { version = "1.1", optional = true, features = ["zlib-rs"] }
 filetime_creation = "0.2"
+getrandom = { version = "0.3", optional = true }
 lzma-rust2 = { path = "lzma-rust2", default-features = false, version = "0.1.7" }
 nt-time = "0.10"
 sha2 = { version = "0.10", optional = true }

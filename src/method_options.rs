@@ -5,17 +5,6 @@ use lzma_rust2::LZMA2Options;
 use crate::aes256sha256::AesEncoderOptions;
 use std::fmt::Debug;
 
-#[cfg(feature = "zstd")]
-#[derive(Debug, Copy, Clone)]
-pub struct ZStandardOptions(pub(crate) i32);
-
-#[cfg(feature = "zstd")]
-impl ZStandardOptions {
-    pub const fn from_level(level: i32) -> Self {
-        Self(level)
-    }
-}
-
 #[cfg(feature = "bzip2")]
 #[derive(Debug, Copy, Clone)]
 pub struct Bzip2Options(pub(crate) u32);
@@ -27,6 +16,28 @@ impl Bzip2Options {
     }
 }
 
+#[cfg(feature = "deflate")]
+#[derive(Debug, Copy, Clone)]
+pub struct DeflateOptions(pub(crate) u32);
+
+#[cfg(feature = "deflate")]
+impl DeflateOptions {
+    pub const fn from_level(level: u32) -> Self {
+        Self(level)
+    }
+}
+
+#[cfg(feature = "zstd")]
+#[derive(Debug, Copy, Clone)]
+pub struct ZStandardOptions(pub(crate) i32);
+
+#[cfg(feature = "zstd")]
+impl ZStandardOptions {
+    pub const fn from_level(level: i32) -> Self {
+        Self(level)
+    }
+}
+
 #[derive(Debug, Clone)]
 pub enum MethodOptions {
     Num(u32),
@@ -34,6 +45,8 @@ pub enum MethodOptions {
     LZMA2(LZMA2Options),
     #[cfg(feature = "bzip2")]
     BZIP2(Bzip2Options),
+    #[cfg(feature = "deflate")]
+    DEFLATE(DeflateOptions),
     #[cfg(feature = "zstd")]
     ZSTD(ZStandardOptions),
     #[cfg(feature = "aes256")]
@@ -78,6 +91,13 @@ impl From<LZMA2Options> for MethodOptions {
 impl From<Bzip2Options> for MethodOptions {
     fn from(o: Bzip2Options) -> Self {
         Self::BZIP2(o)
+    }
+}
+
+#[cfg(feature = "deflate")]
+impl From<DeflateOptions> for MethodOptions {
+    fn from(o: DeflateOptions) -> Self {
+        Self::DEFLATE(o)
     }
 }
 

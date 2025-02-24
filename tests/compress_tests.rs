@@ -234,6 +234,12 @@ fn compress_with_bzip2_algorithm() {
     test_compression_method(SevenZMethod::BZIP2);
 }
 
+#[cfg(feature = "deflate")]
+#[test]
+fn compress_with_deflate_algorithm() {
+    test_compression_method(SevenZMethod::DEFLATE);
+}
+
 #[cfg(feature = "zstd")]
 #[test]
 fn compress_with_zstd_algorithm() {

@@ -63,7 +63,7 @@ Please check [examples/mt_decompress](https://github.com/hasenbanck/sevenz-rust2
 
 ## Compression
 
-Currently, this crate only supports the COPY, LZMA2 and optionally bzip2 and ZStandard compression algorithm.
+Currently, this crate only supports the COPY, LZMA2 and optionally bzip2, DEFLATE and ZStandard compression algorithm.
 
 ```toml
 [dependencies]
