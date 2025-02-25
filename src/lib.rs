@@ -4,18 +4,19 @@
 //!
 //! ## Supported Codecs & filters
 //!
-//! | Codec       | Decompression | Compression |
-//! |-------------|---------------|-------------|
-//! | COPY        | ✓             | ✓           |
-//! | LZMA        | ✓             | ✓           |
-//! | LZMA2       | ✓             | ✓           |
-//! | BROTLI (*)  | ✓             | ✓           |
-//! | BZIP2 (*)   | ✓             | ✓           |
-//! | DEFLATE (*) | ✓             | ✓           |
-//! | LZ4 (*)     | ✓             | ✓           |
-//! | ZSTD (*)    | ✓             | ✓           |
+//! | Codec          | Decompression | Compression |
+//! |----------------|---------------|-------------|
+//! | COPY           | ✓             | ✓           |
+//! | LZMA           | ✓             | ✓           |
+//! | LZMA2          | ✓             | ✓           |
+//! | BROTLI (*/**)  | ✓             | ✓           |
+//! | BZIP2 (*)      | ✓             | ✓           |
+//! | DEFLATE (*)    | ✓             | ✓           |
+//! | LZ4 (*)        | ✓             | ✓           |
+//! | ZSTD (*)       | ✓             | ✓           |
 //!
 //! (*) Require optional feature.
+//! (**) Currently we are not compatible with 7zip ZS when using the Brotli codec.
 //!
 //! | Filter        | Decompression | Compression |
 //! |---------------|---------------|-------------|

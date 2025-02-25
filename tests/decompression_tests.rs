@@ -137,6 +137,27 @@ fn decompress_bzip2_file() {
     assert_eq!(read_to_string(foo_path).unwrap(), "bar\n");
 }
 
+// This file was created with 7-Zip ZS 24.09 - v1.5.6 - Release 1, but can't be decoded by us.
+// On the opposite side, 7-Zip ZS can't read our brotli encoded folders.
+#[cfg(feature = "brotli")]
+#[test]
+#[ignore]
+fn decompress_brotli_file() {
+    let mut source_file = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    source_file.push("tests/resources/brotli.7z");
+    let temp_dir = tempdir().unwrap();
+    let target = temp_dir.path().to_path_buf();
+
+    let mut license_path = target.clone();
+    license_path.push("LICENSE");
+
+    decompress_file(source_file, target).unwrap();
+
+    assert!(read_to_string(license_path)
+        .unwrap()
+        .contains("Apache License"));
+}
+
 #[test]
 fn test_bcj2() {
     let mut file = File::open("tests/resources/7za433_7zip_lzma2_bcj2.7z").unwrap();
