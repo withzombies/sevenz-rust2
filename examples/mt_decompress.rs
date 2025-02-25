@@ -5,9 +5,8 @@ use sevenz_rust2::{Archive, BlockDecoder, Password};
 fn main() {
     let time = std::time::Instant::now();
     let mut file = std::fs::File::open("examples/data/sample.7z").unwrap();
-    let len = file.metadata().unwrap().len();
     let password = Password::empty();
-    let archive = Archive::read(&mut file, len, password.as_slice()).unwrap();
+    let archive = Archive::read(&mut file, password.as_slice()).unwrap();
     let folder_count = archive.folders.len();
     if folder_count <= 1 {
         println!("folder count less than 1, use single thread");

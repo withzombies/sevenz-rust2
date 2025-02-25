@@ -61,11 +61,9 @@ sevenz-rust2 = { version = "0.7", features = ["aes256"] }
 sevenz_rust2::decompress_file_with_password("path/to/encrypted.7z", "path/to/output", "password".into()).expect("complete");
 ```
 
-#### Multi-thread decompress
-
-Please check [examples/mt_decompress](https://github.com/hasenbanck/sevenz-rust2/blob/main/examples/mt_decompress.rs)
-
 ## Compression
+
+Add the 'compress' feature:
 
 ```toml
 [dependencies]
@@ -78,7 +76,9 @@ Use the helper function to create a 7z file with source path:
 sevenz_rust2::compress_to_path("examples/data/sample", "examples/data/sample.7z").expect("compress ok");
 ```
 
-### With AES encryption
+### Compress with AES encryption
+
+Add the 'compress' and 'aes256' feature:
 
 ```toml
 [dependencies]
@@ -91,14 +91,12 @@ Use the helper function to create a 7z file with source path and password:
 sevenz_rust2::compress_to_path_encrypted("examples/data/sample", "examples/data/sample.7z", "password".into()).expect("compress ok");
 ```
 
-### Advance
-
-```toml
-[dependencies]
-sevenz-rust2 = { version = "0.7", features = ["compress", "aes256"] }
-```
+### Advanced Usage
 
 #### Solid compression
+
+Solid archives can in theory provide better compression rates, but decompressing a file needs all previous data to also
+be decompressed.
 
 ```rust
 use sevenz_rust2::*;
@@ -108,7 +106,7 @@ sz.push_source_path("path/to/compress", | _ | true).expect("pack ok");
 sz.finish().expect("compress ok");
 ```
 
-#### Compression methods
+#### Configure the compression methods
 
 With encryption and lzma2 options:
 

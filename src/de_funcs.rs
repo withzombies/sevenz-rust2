@@ -2,7 +2,7 @@ use crate::{password::Password, Error, *};
 use std::io::{Read, Seek};
 use std::path::{Path, PathBuf};
 
-/// decompress a 7z file
+/// Decompresses a 7z file.
 /// # Example
 /// ```no_run
 /// sevenz_rust2::decompress_file("sample.7z", "sample").expect("complete");
@@ -26,7 +26,7 @@ pub fn decompress_file_with_extract_fn(
     decompress_with_extract_fn(file, dest, extract_fn)
 }
 
-/// decompress a source reader to [dest] path
+/// Decompresses a source reader to `dest` path.
 #[inline]
 pub fn decompress<R: Read + Seek>(src_reader: R, dest: impl AsRef<Path>) -> Result<(), Error> {
     decompress_with_extract_fn(src_reader, dest, default_entry_extract_fn)
@@ -43,7 +43,8 @@ pub fn decompress_with_extract_fn<R: Read + Seek>(
 }
 
 #[cfg(all(feature = "aes256", not(target_arch = "wasm32")))]
-/// decompress a encrypted file with password
+/// Decompresses an encrypted file with the given password.
+///
 /// # Example
 /// ```no_run
 /// sevenz_rust2::decompress_file_with_password("sample.7z", "sample", "password".into()).expect("complete");
@@ -89,9 +90,8 @@ fn decompress_impl<R: Read + Seek>(
     use std::io::SeekFrom;
 
     let pos = src_reader.stream_position().map_err(Error::io)?;
-    let len = src_reader.seek(SeekFrom::End(0)).map_err(Error::io)?;
     src_reader.seek(SeekFrom::Start(pos)).map_err(Error::io)?;
-    let mut seven = SevenZReader::new(src_reader, len, password)?;
+    let mut seven = SevenZReader::new(src_reader, password)?;
     let dest = PathBuf::from(dest.as_ref());
     if !dest.exists() {
         std::fs::create_dir_all(&dest).map_err(Error::io)?;

@@ -140,8 +140,7 @@ fn decompress_bzip2_file() {
 #[test]
 fn test_bcj2() {
     let mut file = File::open("tests/resources/7za433_7zip_lzma2_bcj2.7z").unwrap();
-    let file_len = file.metadata().unwrap().len();
-    let archive = Archive::read(&mut file, file_len, &[]).unwrap();
+    let archive = Archive::read(&mut file, &[]).unwrap();
     for i in 0..archive.folders.len() {
         let fd = BlockDecoder::new(i, &archive, &[], &mut file);
         println!("entry_count:{}", fd.entry_count());
@@ -162,8 +161,7 @@ fn test_entry_compressed_size() {
         if path.to_string_lossy().ends_with("7z") {
             println!("{:?}", path);
             let mut file = File::open(path).unwrap();
-            let file_len = file.metadata().unwrap().len();
-            let archive = Archive::read(&mut file, file_len, &[]).unwrap();
+            let archive = Archive::read(&mut file, &[]).unwrap();
             for i in 0..archive.folders.len() {
                 let fi = archive.stream_map.folder_first_file_index[i];
                 let file = &archive.files[fi];

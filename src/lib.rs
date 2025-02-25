@@ -1,3 +1,36 @@
+//! This project is a 7z compressor/decompressor written in pure Rust.
+//!
+//! This is a fork of the original, unmaintained sevenz-rust crate to continue the development and maintenance.
+//!
+//! ## Supported Codecs & filters
+//!
+//! | Codec       | Decompression | Compression |
+//! |-------------|---------------|-------------|
+//! | COPY        | ✓             | ✓           |
+//! | LZMA        | ✓             | ✓           |
+//! | LZMA2       | ✓             | ✓           |
+//! | BROTLI (*)  | ✓             | ✓           |
+//! | BZIP2 (*)   | ✓             | ✓           |
+//! | DEFLATE (*) | ✓             | ✓           |
+//! | LZ4 (*)     | ✓             | ✓           |
+//! | ZSTD (*)    | ✓             | ✓           |
+//!
+//! (*) Require optional feature.
+//!
+//! All optional codes are a best effort implementation, since there is no definite specification about their implementation
+//! in 7z. We use the IDs provided by the specification provided
+//! by [Py7zr](https://!py7zr.readthedocs.io/en/latest/archive_format.html).
+//!
+//! | Filter        | Decompression | Compression |
+//! |---------------|---------------|-------------|
+//! | BCJ X86       | ✓             |             |
+//! | BCJ PPC       | ✓             |             |
+//! | BCJ IA64      | ✓             |             |
+//! | BCJ ARM       | ✓             |             |
+//! | BCJ ARM_THUMB | ✓             |             |
+//! | BCJ SPARC     | ✓             |             |
+//! | DELTA         | ✓             |             |
+//! | BCJ2          | ✓             |             |
 extern crate filetime_creation as ft;
 #[cfg(target_arch = "wasm32")]
 extern crate wasm_bindgen;

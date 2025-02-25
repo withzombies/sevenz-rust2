@@ -185,12 +185,7 @@ fn test_compression_method(method: SevenZMethod) {
         writer.finish().unwrap();
     }
 
-    let mut reader = SevenZReader::new(
-        Cursor::new(bytes.as_slice()),
-        bytes.len() as u64,
-        Password::empty(),
-    )
-    .unwrap();
+    let mut reader = SevenZReader::new(Cursor::new(bytes.as_slice()), Password::empty()).unwrap();
 
     assert_eq!(reader.archive().files.len(), 2);
 

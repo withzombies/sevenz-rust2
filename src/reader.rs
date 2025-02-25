@@ -156,34 +156,35 @@ impl Archive {
         password: &Password,
     ) -> Result<Archive, Error> {
         let mut file = File::open(path)?;
-        let len = file.metadata()?.len();
-        Self::read(&mut file, len, password.as_ref())
+        Self::read(&mut file, password.as_ref())
     }
+
     /// Read 7z file archive info use the specified `reader`.
-    /// -[`reader_len`] the `reader` stream length
-    /// -[`password`] Archive password encoded in utf16 little endian.
     ///
-    /// # Examples
+    /// # Parameters
+    /// - `reader`   - the reader of the 7z filr archive
+    /// - `password` - archive password encoded in utf16 little endian
+    ///
+    /// # Example
+    ///
     /// ```no_run
     /// use std::io::{Read,Seek};
     /// use std::fs::File;
     /// use sevenz_rust2::*;
+    ///
     /// let mut reader = File::open("example.7z").unwrap();
-    /// let len = reader.metadata().unwrap().len();
     ///
     /// let password = Password::from("the password");
-    /// let archive = Archive::read(&mut reader,len, password.as_ref()).unwrap();
+    /// let archive = Archive::read(&mut reader, password.as_ref()).unwrap();
     ///
-    /// //let archive = Archive::read(&mut reader,len, &[]);// for unencrypted file
     /// for entry in &archive.files {
     ///     println!("{}", entry.name());
     /// }
     /// ```
-    pub fn read<R: Read + Seek>(
-        reader: &mut R,
-        reader_len: u64,
-        password: &[u8],
-    ) -> Result<Archive, Error> {
+    pub fn read<R: Read + Seek>(reader: &mut R, password: &[u8]) -> Result<Archive, Error> {
+        let reader_len = reader.seek(SeekFrom::End(0))?;
+        reader.seek(SeekFrom::Start(0))?;
+
         let mut signature = [0; 6];
         reader.read_exact(&mut signature).map_err(Error::io)?;
         if signature != SEVEN_Z_SIGNATURE {
@@ -1104,6 +1105,7 @@ struct IndexEntry {
     file_index: usize,
 }
 
+/// Reads a 7z file.
 pub struct SevenZReader<R: Read + Seek> {
     source: R,
     archive: Archive,
@@ -1113,20 +1115,21 @@ pub struct SevenZReader<R: Read + Seek> {
 
 #[cfg(not(target_arch = "wasm32"))]
 impl SevenZReader<File> {
+    /// Opens a 7z archive file at the given `path` and creates a [`SevenZReader`] to read it.
     #[inline]
     pub fn open(path: impl AsRef<std::path::Path>, password: Password) -> Result<Self, Error> {
         let file = File::open(path.as_ref())
             .map_err(|e| Error::file_open(e, path.as_ref().to_string_lossy().to_string()))?;
-        let len = file.metadata().map(|m| m.len()).map_err(Error::io)?;
-        Self::new(file, len, password)
+        Self::new(file, password)
     }
 }
 
 impl<R: Read + Seek> SevenZReader<R> {
+    /// Creates a [`SevenZReader`] to read a 7z archive file from the given `source` reader.
     #[inline]
-    pub fn new(mut source: R, reader_len: u64, password: Password) -> Result<Self, Error> {
+    pub fn new(mut source: R, password: Password) -> Result<Self, Error> {
         let password = password.to_vec();
-        let archive = Archive::read(&mut source, reader_len, &password)?;
+        let archive = Archive::read(&mut source, &password)?;
 
         let mut reader = Self {
             source,
@@ -1376,9 +1379,6 @@ impl<R: Read + Seek> SevenZReader<R> {
     /// Attention about solid archive:
     /// When decoding a solid archive, the data to be decompressed depends on the data in front of it,
     /// you cannot simply skip the previous data and only decompress the data in the back.
-    ///
-    /// To speed up decompression, you can check this example [examples/forder_dec.rs](https://github.com/hasenbanck/sevenz-rust2/blob/main/examples/forder_dec.rs).
-    /// And this example [mt_decompress.rs](https://github.com/hasenbanck/sevenz-rust2/blob/main/examples/mt_decompress.rs) if you want use multi-thread.
     pub fn for_each_entries<F: FnMut(&SevenZArchiveEntry, &mut dyn Read) -> Result<bool, Error>>(
         &mut self,
         mut each: F,
@@ -1518,11 +1518,10 @@ impl<'a, R: Read + Seek> BlockDecoder<'a, R> {
 
     /// Takes a closure to decode each files in this block.
     ///
-    /// When decoding files in a block, the data to be decompressed depends on the data in front of it,
-    /// you cannot simply skip the previous data and only decompress the data in the back.
+    /// When decoding files in a block, the data to be decompressed depends on the data in front of
+    /// it, you cannot simply skip the previous data and only decompress the data in the back.
     ///
-    /// To speed up decompression, you can check this example [examples/forder_dec.rs](https://github.com/hasenbanck/sevenz-rust2/blob/main/examples/forder_dec.rs).
-    /// And this example [mt_decompress.rs](https://github.com/hasenbanck/sevenz-rust2/blob/main/examples/mt_decompress.rs) if you want use multi-thread.
+    /// Non-solid archives use one block per file and allow more effective decoding of single files.
     pub fn for_each_entries<F: FnMut(&SevenZArchiveEntry, &mut dyn Read) -> Result<bool, Error>>(
         self,
         each: &mut F,

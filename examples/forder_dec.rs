@@ -4,9 +4,8 @@ use sevenz_rust2::{Archive, BlockDecoder, Password};
 
 fn main() {
     let mut file = std::fs::File::open("examples/data/sample.7z").unwrap();
-    let len = file.metadata().unwrap().len();
     let password = Password::empty();
-    let archive = Archive::read(&mut file, len, password.as_slice()).unwrap();
+    let archive = Archive::read(&mut file, password.as_slice()).unwrap();
     let folder_count = archive.folders.len();
     let my_file_name = "7zFormat.txt";
 

@@ -8,7 +8,7 @@ use std::{
 
 use crate::*;
 
-/// Helper function to compress `src` path to `dest` writer
+/// Helper function to compress `src` path to `dest` writer.
 pub fn compress<W: Write + Seek>(src: impl AsRef<Path>, dest: W) -> Result<W, Error> {
     let mut z = SevenZWriter::new(dest)?;
     let parent = if src.as_ref().is_dir() {
@@ -42,7 +42,7 @@ pub fn compress_encrypted<W: Write + Seek>(
     z.finish().map_err(Error::io)
 }
 
-/// Helper function to compress `src` path to `dest` path
+/// Helper function to compress `src` path to `dest` path.
 pub fn compress_to_path(src: impl AsRef<Path>, dest: impl AsRef<Path>) -> Result<(), Error> {
     if let Some(p) = dest.as_ref().parent() {
         if !p.exists() {
@@ -117,10 +117,7 @@ fn compress_path<W: Write + Seek, P: AsRef<Path>>(
 }
 
 impl<W: Write + Seek> SevenZWriter<W> {
-    /// [Solid compression](https://en.wikipedia.org/wiki/Solid_compression)
-    /// compress all files in [path].
-    /// With multiple files in one block.
-    #[inline]
+    /// Solid compression - compress all files in `path` with multiple files in one block.
     pub fn push_source_path(
         &mut self,
         path: impl AsRef<Path>,
@@ -130,9 +127,7 @@ impl<W: Write + Seek> SevenZWriter<W> {
         Ok(self)
     }
 
-    /// [Non-solid compression]
-    /// compress all files in [path].
-    /// With one file per block.
+    /// Non-solid compression - compresses all files into `path` with one file per block.
     pub fn push_source_path_non_solid(
         &mut self,
         path: impl AsRef<Path>,

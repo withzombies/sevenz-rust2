@@ -131,8 +131,8 @@ impl<R: Read> LZMAReader<R> {
     }
 
     /// Creates a new .lzma file format decompressor with an optional memory usage limit.
-    /// - [mem_limit_kb] - memory usage limit in kibibytes (KiB). u32::MAX means no limit.
-    /// - [preset_dict] - preset dictionary or None to use no preset dictionary.
+    /// - `mem_limit_kb` - memory usage limit in kibibytes (KiB). `u32::MAX` means no limit.
+    /// - `preset_dict` - preset dictionary or None to use no preset dictionary.
     pub fn new_mem_limit(
         mut reader: R,
         mem_limit_kb: u32,
@@ -156,11 +156,11 @@ impl<R: Read> LZMAReader<R> {
     }
 
     /// Creates a new input stream that decompresses raw LZMA data (no .lzma header) from `reader` optionally with a preset dictionary.
-    /// - [reader] - the reader to read compressed data from.
-    /// - [uncomp_size] - the uncompressed size of the data to be decompressed.
-    /// - [props] - the LZMA properties byte.
-    /// - [dict_size] - the LZMA dictionary size.
-    /// - [preset_dict] - preset dictionary or None to use no preset dictionary.
+    /// - `reader` - the reader to read compressed data from.
+    /// - `uncomp_size` - the uncompressed size of the data to be decompressed.
+    /// - `props` - the LZMA properties byte.
+    /// - `dict_size` - the LZMA dictionary size.
+    /// - `preset_dict` - preset dictionary or None to use no preset dictionary.
     pub fn new_with_props(
         reader: R,
         uncomp_size: u64,
@@ -172,13 +172,13 @@ impl<R: Read> LZMAReader<R> {
     }
 
     /// Creates a new input stream that decompresses raw LZMA data (no .lzma header) from `reader` optionally with a preset dictionary.
-    /// - [reader] - the input stream to read compressed data from.
-    /// - [uncomp_size] - the uncompressed size of the data to be decompressed.
-    /// - [lc] - the number of literal context bits.
-    /// - [lp] - the number of literal position bits.
-    /// - [pb] - the number of position bits.
-    /// - [dict_size] - the LZMA dictionary size.
-    /// - [preset_dict] - preset dictionary or None to use no preset dictionary.
+    /// - `reader` - the input stream to read compressed data from.
+    /// - `uncomp_size` - the uncompressed size of the data to be decompressed.
+    /// - `lc` - the number of literal context bits.
+    /// - `lp` - the number of literal position bits.
+    /// - `pb` - the number of position bits.
+    /// - `dict_size` - the LZMA dictionary size.
+    /// - `preset_dict` - preset dictionary or None to use no preset dictionary.
     pub fn new(
         reader: R,
         uncomp_size: u64,

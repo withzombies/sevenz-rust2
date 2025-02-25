@@ -63,7 +63,7 @@ macro_rules! write_times {
 
 type Result<T> = std::result::Result<T, Error>;
 
-/// Writes a 7z file
+/// Writes a 7z file.
 pub struct SevenZWriter<W: Write> {
     output: W,
     files: Vec<SevenZArchiveEntry>,
@@ -75,7 +75,7 @@ pub struct SevenZWriter<W: Write> {
 
 #[cfg(not(target_arch = "wasm32"))]
 impl SevenZWriter<File> {
-    /// Creates a file to write a 7z archive to
+    /// Creates a file to write a 7z archive to.
     pub fn create(path: impl AsRef<Path>) -> Result<Self> {
         let file = File::create(path.as_ref())
             .map_err(|e| Error::file_open(e, path.as_ref().to_string_lossy().to_string()))?;
@@ -100,9 +100,7 @@ impl<W: Write + Seek> SevenZWriter<W> {
         })
     }
 
-    /// Sets the default compression methods to use for entry contents.
-    ///
-    /// The default is LZMA2.
+    /// Sets the default compression methods to use for entry data. Default is LZMA2.
     pub fn set_content_methods(
         &mut self,
         content_methods: Vec<SevenZMethodConfiguration>,
@@ -114,14 +112,14 @@ impl<W: Write + Seek> SevenZWriter<W> {
         self
     }
 
-    /// Whether to enable encrypt-header
-    /// Default's true
+    /// Whether to enable the encryption of the -header. Default is `true`.
     pub fn set_encrypt_header(&mut self, enabled: bool) {
         self.encrypt_header = enabled;
     }
 
-    /// Adds an archive `entry` with data from `reader`
-    /// # Examples
+    /// Adds an archive `entry` with data from `reader`.
+    ///
+    /// # Example
     /// ```no_run
     /// use sevenz_rust2::*;
     /// use std::fs::File;
@@ -213,11 +211,10 @@ impl<W: Write + Seek> SevenZWriter<W> {
         Ok(self.files.last().unwrap())
     }
 
-    /// [Solid compression](https://en.wikipedia.org/wiki/Solid_compression)
-    /// pack [entries] into one pack
+    /// Solid compression - packs `entries` into one pack.
     ///
     /// # Panics
-    /// Panics if `entries`'s length not equals to `reader.reader_len()`
+    /// * If `entries`'s length not equals to `reader.reader_len()`
     pub fn push_archive_entries<R: Read>(
         &mut self,
         mut entries: Vec<SevenZArchiveEntry>,
