@@ -69,7 +69,7 @@ impl Default for DeflateOptions {
 }
 
 #[cfg(feature = "lz4")]
-#[derive(Default, Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub struct LZ4Options(pub(crate) u32);
 
 #[cfg(feature = "lz4")]
@@ -83,6 +83,13 @@ impl LZ4Options {
             level
         };
         Self(level)
+    }
+}
+
+#[cfg(feature = "lz4")]
+impl Default for LZ4Options {
+    fn default() -> Self {
+        Self(1)
     }
 }
 

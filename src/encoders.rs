@@ -200,22 +200,23 @@ pub(crate) fn get_options_as_properties<'a>(
         }
         #[cfg(feature = "brotli")]
         SevenZMethod::ID_BROTLI => {
-            let version_major = 1;
+            let version_major = brotli::VERSION;
             let version_minor = 0;
             let options = match options {
                 Some(MethodOptions::BROTLI(options)) => *options,
                 _ => BrotliOptions::default(),
             };
 
-            out[0] = version_major as u8;
-            out[1] = version_minor as u8;
+            out[0] = version_major;
+            out[1] = version_minor;
             out[2] = options.quality as u8;
             &out[0..3]
         }
         #[cfg(feature = "lz4")]
         SevenZMethod::ID_LZ4 => {
-            let version_major = 1;
-            let version_minor = 10;
+            let version = lz4::version();
+            let version_major = version / (10000);
+            let version_minor = (version / 100) % 100;
             let options = match options {
                 Some(MethodOptions::LZ4(options)) => *options,
                 _ => LZ4Options::default(),
@@ -228,8 +229,8 @@ pub(crate) fn get_options_as_properties<'a>(
         }
         #[cfg(feature = "zstd")]
         SevenZMethod::ID_ZSTD => {
-            let version_major = 1;
-            let version_minor = 5;
+            let version_major = zstd::zstd_safe::VERSION_MAJOR;
+            let version_minor = zstd::zstd_safe::VERSION_MINOR;
             let options = match options {
                 Some(MethodOptions::ZSTD(options)) => *options,
                 _ => ZStandardOptions::default(),
