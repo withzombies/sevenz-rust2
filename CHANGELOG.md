@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Replaced all unsafe code from sevenz-rust2 and lzma-rust2 with safe alternatives
 - sha2 is now an optional dependency that is activated when using the aes256 features
 - Update of the documentation
-- Removed the need to provide the length of a reader when reading an archive file.
+- Removed the need to provide the length of a reader when reading an archive file
 
 ### 0.7.0 - 2025-02-24
 
