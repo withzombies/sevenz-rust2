@@ -5,12 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-### Unreleased
+### 0.9.0 - 2025-02-25
 
 ### Added
 
 - Add `SevenZReader::file_compression_methods()`.
-- Improve compatibility with third party programs
+
+### Fixed
+
+- Improve compatibility with third party programs (tested with 7-Zip ZS 1.5.6)
+  bzip2, LZ4 and ZSTD now work flawless. BROTLI isn't compatible right now.
 
 ### 0.8.0 - 2025-02-25
 

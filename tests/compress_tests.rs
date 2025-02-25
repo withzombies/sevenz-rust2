@@ -220,7 +220,7 @@ fn test_compression_method(method: SevenZMethod) {
     let data = reader.read_file("data/test.txt").unwrap();
 
     assert_eq!(ipsum_content.as_slice(), data.as_slice());
-    std::fs::write("test.7z", bytes.as_slice()).unwrap();
+    //std::fs::write("test.7z", bytes.as_slice()).unwrap();
 }
 
 #[cfg(feature = "compress")]

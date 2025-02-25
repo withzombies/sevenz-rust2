@@ -36,7 +36,7 @@ This is a fork of the original, unmaintained sevenz-rust crate to continue the d
 
 ```toml
 [dependencies]
-sevenz-rust = { version = "0.7" }
+sevenz-rust = { version = "0.9" }
 ```
 
 Decompress source file "data/sample.7z" to destination path "data/sample":
@@ -51,7 +51,7 @@ Add the 'aes256' feature:
 
 ```toml
 [dependencies]
-sevenz-rust2 = { version = "0.7", features = ["aes256"] }
+sevenz-rust2 = { version = "0.9", features = ["aes256"] }
 ```
 
 ```rust
@@ -64,7 +64,7 @@ Add the 'compress' feature:
 
 ```toml
 [dependencies]
-sevenz-rust2 = { version = "0.7", features = ["compress"] }
+sevenz-rust2 = { version = "0.9", features = ["compress"] }
 ```
 
 Use the helper function to create a 7z file with source path:
@@ -79,7 +79,7 @@ Add the 'compress' and 'aes256' feature:
 
 ```toml
 [dependencies]
-sevenz-rust2 = { version = "0.7", features = ["compress", "aes256"] }
+sevenz-rust2 = { version = "0.9", features = ["compress", "aes256"] }
 ```
 
 Use the helper function to create a 7z file with source path and password:
