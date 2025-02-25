@@ -29,6 +29,8 @@ pub enum Decoder<R: Read> {
     BZip2(BzDecoder<R>),
     #[cfg(feature = "deflate")]
     Deflate(DeflateDecoder<std::io::BufReader<R>>),
+    #[cfg(feature = "lz4")]
+    LZ4(lz4_flex::frame::FrameDecoder<R>),
     #[cfg(feature = "zstd")]
     ZSTD(zstd::Decoder<'static, std::io::BufReader<R>>),
     #[cfg(feature = "aes256")]
@@ -49,6 +51,8 @@ impl<R: Read> Read for Decoder<R> {
             Decoder::BZip2(r) => r.read(buf),
             #[cfg(feature = "deflate")]
             Decoder::Deflate(r) => r.read(buf),
+            #[cfg(feature = "lz4")]
+            Decoder::LZ4(r) => r.read(buf),
             #[cfg(feature = "zstd")]
             Decoder::ZSTD(r) => r.read(buf),
             #[cfg(feature = "aes256")]
@@ -113,6 +117,11 @@ pub fn add_decoder<I: Read>(
             let buf_read = std::io::BufReader::new(input);
             let de = DeflateDecoder::new(buf_read);
             Ok(Decoder::Deflate(de))
+        }
+        #[cfg(feature = "lz4")]
+        SevenZMethod::ID_LZ4 => {
+            let de = lz4_flex::frame::FrameDecoder::new(input);
+            Ok(Decoder::LZ4(de))
         }
         #[cfg(feature = "zstd")]
         SevenZMethod::ID_ZSTD => {

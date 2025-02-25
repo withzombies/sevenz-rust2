@@ -20,6 +20,8 @@ pub enum Encoder<W: Write> {
     BZIP2(bzip2::write::BzEncoder<CountingWriter<W>>),
     #[cfg(feature = "deflate")]
     DEFLATE(flate2::write::DeflateEncoder<CountingWriter<W>>),
+    #[cfg(feature = "lz4")]
+    LZ4(lz4_flex::frame::FrameEncoder<CountingWriter<W>>),
     #[cfg(feature = "zstd")]
     ZSTD(zstd::Encoder<'static, CountingWriter<W>>),
     #[cfg(feature = "aes256")]
@@ -38,6 +40,8 @@ impl<W: Write> Write for Encoder<W> {
             Encoder::BZIP2(w) => w.write(buf),
             #[cfg(feature = "deflate")]
             Encoder::DEFLATE(w) => w.write(buf),
+            #[cfg(feature = "lz4")]
+            Encoder::LZ4(w) => w.write(buf),
             #[cfg(feature = "zstd")]
             Encoder::ZSTD(w) => w.write(buf),
             #[cfg(feature = "aes256")]
@@ -56,6 +60,8 @@ impl<W: Write> Write for Encoder<W> {
             Encoder::BZIP2(w) => w.flush(),
             #[cfg(feature = "deflate")]
             Encoder::DEFLATE(w) => w.flush(),
+            #[cfg(feature = "lz4")]
+            Encoder::LZ4(w) => w.flush(),
             #[cfg(feature = "zstd")]
             Encoder::ZSTD(w) => w.flush(),
             #[cfg(feature = "aes256")]
@@ -114,6 +120,11 @@ pub fn add_encoder<W: Write>(
             let deflate_encoder =
                 flate2::write::DeflateEncoder::new(input, flate2::Compression::new(level));
             Ok(Encoder::DEFLATE(deflate_encoder))
+        }
+        #[cfg(feature = "lz4")]
+        SevenZMethod::ID_LZ4 => {
+            let lz4_encoder = lz4_flex::frame::FrameEncoder::new(input);
+            Ok(Encoder::LZ4(lz4_encoder))
         }
         #[cfg(feature = "zstd")]
         SevenZMethod::ID_ZSTD => {

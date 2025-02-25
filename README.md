@@ -3,11 +3,6 @@
 
 This project is a 7z compressor/decompressor written in pure Rust.
 
-And it's very much inspired by the [apache commons-compress](https://commons.apache.org/proper/commons-compress/)
-project.
-
-The LZMA/LZMA2 decoder and all filters code was ported from [tukaani xz for java](https://tukaani.org/xz/java.html)
-
 This is a fork of the original, unmaintained sevenz-rust crate to continue the development and maintenance.
 
 ## Supported Codecs & filters
@@ -20,9 +15,14 @@ This is a fork of the original, unmaintained sevenz-rust crate to continue the d
 | BROTLI (*)  | ✓             | ✓           |
 | BZIP2 (*)   | ✓             | ✓           |
 | DEFLATE (*) | ✓             | ✓           |
+| LZ4 (*)     | ✓             | ✓           |
 | ZSTD (*)    | ✓             | ✓           |
 
 (*) Require optional feature.
+
+All optional codes are a best effort implementation, since there is no definite specification about their implementation
+in 7z. We use the IDs provided by the specification provided
+by [Py7zr](https://py7zr.readthedocs.io/en/latest/archive_format.html).
 
 | Filter        | Decompression | Compression |
 |---------------|---------------|-------------|
