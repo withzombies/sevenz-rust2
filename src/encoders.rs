@@ -9,6 +9,21 @@ use crate::{
 };
 use std::io::Write;
 
+#[cfg(feature = "brotli")]
+use crate::BrotliOptions;
+
+#[cfg(feature = "bzip2")]
+use crate::Bzip2Options;
+
+#[cfg(feature = "deflate")]
+use crate::DeflateOptions;
+
+#[cfg(feature = "lz4")]
+use crate::LZ4Options;
+
+#[cfg(feature = "zstd")]
+use crate::ZStandardOptions;
+
 #[allow(clippy::upper_case_acronyms)]
 pub enum Encoder<W: Write> {
     COPY(CountingWriter<W>),
@@ -21,7 +36,7 @@ pub enum Encoder<W: Write> {
     #[cfg(feature = "deflate")]
     DEFLATE(flate2::write::DeflateEncoder<CountingWriter<W>>),
     #[cfg(feature = "lz4")]
-    LZ4(lz4_flex::frame::FrameEncoder<CountingWriter<W>>),
+    LZ4(lz4::Encoder<CountingWriter<W>>),
     #[cfg(feature = "zstd")]
     ZSTD(zstd::Encoder<'static, CountingWriter<W>>),
     #[cfg(feature = "aes256")]
@@ -92,47 +107,57 @@ pub fn add_encoder<W: Write>(
         }
         #[cfg(feature = "brotli")]
         SevenZMethod::ID_BROTLI => {
-            let (quality, window) = match method_config.options.as_ref() {
-                Some(MethodOptions::BROTLI(options)) => (options.quality, options.window),
-                _ => (11, 22),
+            let options = match method_config.options {
+                Some(MethodOptions::BROTLI(options)) => options,
+                _ => BrotliOptions::default(),
             };
 
-            let brotli_encoder = brotli::CompressorWriter::new(input, 4096, quality, window);
+            let brotli_encoder =
+                brotli::CompressorWriter::new(input, 4096, options.quality, options.window);
             Ok(Encoder::BROTLI(brotli_encoder))
         }
         #[cfg(feature = "bzip2")]
         SevenZMethod::ID_BZIP2 => {
-            let level = match method_config.options.as_ref() {
-                Some(MethodOptions::BZIP2(options)) => options.0,
-                _ => 6,
+            let options = match method_config.options {
+                Some(MethodOptions::BZIP2(options)) => options,
+                _ => Bzip2Options::default(),
             };
 
-            let bzip2_encoder = bzip2::write::BzEncoder::new(input, bzip2::Compression::new(level));
+            let bzip2_encoder =
+                bzip2::write::BzEncoder::new(input, bzip2::Compression::new(options.0));
             Ok(Encoder::BZIP2(bzip2_encoder))
         }
         #[cfg(feature = "deflate")]
         SevenZMethod::ID_DEFLATE => {
-            let level = match method_config.options.as_ref() {
-                Some(MethodOptions::DEFLATE(options)) => options.0,
-                _ => 6,
+            let options = match method_config.options {
+                Some(MethodOptions::DEFLATE(options)) => options,
+                _ => DeflateOptions::default(),
             };
 
             let deflate_encoder =
-                flate2::write::DeflateEncoder::new(input, flate2::Compression::new(level));
+                flate2::write::DeflateEncoder::new(input, flate2::Compression::new(options.0));
             Ok(Encoder::DEFLATE(deflate_encoder))
         }
         #[cfg(feature = "lz4")]
         SevenZMethod::ID_LZ4 => {
-            let lz4_encoder = lz4_flex::frame::FrameEncoder::new(input);
+            let options = match method_config.options.as_ref() {
+                Some(MethodOptions::LZ4(options)) => *options,
+                _ => LZ4Options::default(),
+            };
+
+            let lz4_encoder = lz4::EncoderBuilder::new()
+                .level(options.0)
+                .build(input)
+                .map_err(Error::io)?;
             Ok(Encoder::LZ4(lz4_encoder))
         }
         #[cfg(feature = "zstd")]
         SevenZMethod::ID_ZSTD => {
-            let level = match method_config.options.as_ref() {
-                Some(MethodOptions::ZSTD(options)) => options.0,
-                _ => 3,
+            let options = match method_config.options.as_ref() {
+                Some(MethodOptions::ZSTD(options)) => *options,
+                _ => ZStandardOptions::default(),
             };
-            let zstd_encoder = zstd::Encoder::new(input, level).map_err(Error::io)?;
+            let zstd_encoder = zstd::Encoder::new(input, options.0 as i32).map_err(Error::io)?;
             Ok(Encoder::ZSTD(zstd_encoder))
         }
         #[cfg(feature = "aes256")]
@@ -172,6 +197,48 @@ pub(crate) fn get_options_as_properties<'a>(
             out[0] = options.get_props();
             out[1..5].copy_from_slice(dict_size.to_le_bytes().as_ref());
             &out[0..5]
+        }
+        #[cfg(feature = "brotli")]
+        SevenZMethod::ID_BROTLI => {
+            let version_major = 1;
+            let version_minor = 0;
+            let options = match options {
+                Some(MethodOptions::BROTLI(options)) => *options,
+                _ => BrotliOptions::default(),
+            };
+
+            out[0] = version_major as u8;
+            out[1] = version_minor as u8;
+            out[2] = options.quality as u8;
+            &out[0..3]
+        }
+        #[cfg(feature = "lz4")]
+        SevenZMethod::ID_LZ4 => {
+            let version_major = 1;
+            let version_minor = 10;
+            let options = match options {
+                Some(MethodOptions::LZ4(options)) => *options,
+                _ => LZ4Options::default(),
+            };
+
+            out[0] = version_major as u8;
+            out[1] = version_minor as u8;
+            out[2] = options.0 as u8;
+            &out[0..3]
+        }
+        #[cfg(feature = "zstd")]
+        SevenZMethod::ID_ZSTD => {
+            let version_major = 1;
+            let version_minor = 5;
+            let options = match options {
+                Some(MethodOptions::ZSTD(options)) => *options,
+                _ => ZStandardOptions::default(),
+            };
+
+            out[0] = version_major as u8;
+            out[1] = version_minor as u8;
+            out[2] = options.0 as u8;
+            &out[0..3]
         }
         #[cfg(feature = "aes256")]
         SevenZMethod::ID_AES256SHA256 => {

@@ -16,6 +16,13 @@ impl Bzip2Options {
     }
 }
 
+#[cfg(feature = "bzip2")]
+impl Default for Bzip2Options {
+    fn default() -> Self {
+        Self(6)
+    }
+}
+
 #[cfg(feature = "brotli")]
 #[derive(Debug, Copy, Clone)]
 pub struct BrotliOptions {
@@ -26,7 +33,19 @@ pub struct BrotliOptions {
 #[cfg(feature = "brotli")]
 impl BrotliOptions {
     pub const fn from_quality_window(quality: u32, window: u32) -> Self {
+        let quality = if quality > 11 { 11 } else { quality };
+        let window = if window > 24 { 24 } else { window };
         Self { quality, window }
+    }
+}
+
+#[cfg(feature = "brotli")]
+impl Default for BrotliOptions {
+    fn default() -> Self {
+        Self {
+            quality: 11,
+            window: 22,
+        }
     }
 }
 
@@ -37,18 +56,52 @@ pub struct DeflateOptions(pub(crate) u32);
 #[cfg(feature = "deflate")]
 impl DeflateOptions {
     pub const fn from_level(level: u32) -> Self {
+        let level = if level > 9 { 9 } else { level };
+        Self(level)
+    }
+}
+
+#[cfg(feature = "deflate")]
+impl Default for DeflateOptions {
+    fn default() -> Self {
+        Self(6)
+    }
+}
+
+#[cfg(feature = "lz4")]
+#[derive(Default, Debug, Copy, Clone)]
+pub struct LZ4Options(pub(crate) u32);
+
+#[cfg(feature = "lz4")]
+impl LZ4Options {
+    pub const fn from_level(level: u32) -> Self {
+        let level = if level == 0 {
+            1
+        } else if level > 12 {
+            12
+        } else {
+            level
+        };
         Self(level)
     }
 }
 
 #[cfg(feature = "zstd")]
 #[derive(Debug, Copy, Clone)]
-pub struct ZStandardOptions(pub(crate) i32);
+pub struct ZStandardOptions(pub(crate) u32);
 
 #[cfg(feature = "zstd")]
 impl ZStandardOptions {
-    pub const fn from_level(level: i32) -> Self {
+    pub const fn from_level(level: u32) -> Self {
+        let level = if level > 22 { 22 } else { level };
         Self(level)
+    }
+}
+
+#[cfg(feature = "zstd")]
+impl Default for ZStandardOptions {
+    fn default() -> Self {
+        Self(3)
     }
 }
 
@@ -63,6 +116,8 @@ pub enum MethodOptions {
     BZIP2(Bzip2Options),
     #[cfg(feature = "deflate")]
     DEFLATE(DeflateOptions),
+    #[cfg(feature = "lz4")]
+    LZ4(LZ4Options),
     #[cfg(feature = "zstd")]
     ZSTD(ZStandardOptions),
     #[cfg(feature = "aes256")]

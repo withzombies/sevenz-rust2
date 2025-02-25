@@ -20,10 +20,6 @@ This is a fork of the original, unmaintained sevenz-rust crate to continue the d
 
 (*) Require optional feature.
 
-All optional codes are a best effort implementation, since there is no definite specification about their implementation
-in 7z. We use the IDs provided by the specification provided
-by [Py7zr](https://py7zr.readthedocs.io/en/latest/archive_format.html).
-
 | Filter        | Decompression | Compression |
 |---------------|---------------|-------------|
 | BCJ X86       | ✓             |             |
