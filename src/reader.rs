@@ -1510,8 +1510,8 @@ impl<R: Read + Seek> SevenZReader<R> {
             .coders
             .iter()
             .filter_map(|coder| SevenZMethod::by_id(coder.decompression_method_id()))
-            .for_each(|coder| {
-                methods.push(coder);
+            .for_each(|method| {
+                methods.push(method);
             });
 
         Ok(())
