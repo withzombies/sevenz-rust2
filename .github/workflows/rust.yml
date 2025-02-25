@@ -36,8 +36,10 @@ jobs:
           toolchain: ${{matrix.toolchain}}
           target: ${{matrix.target}}
       - uses: actions/checkout@v4
+      - name: Build
+        run: cargo build --workspace --release
       - name: Run tests
-        run: cargo test --verbose --release --all-features
+        run: cargo test --workspace --release --all-features
 
   rustfmt:
     name: Rustfmt
@@ -53,7 +55,7 @@ jobs:
       - name: Cache build artifacts
         uses: Swatinem/rust-cache@v2.7.7
       - name: Check code formatted
-        run: cargo fmt -- --check
+        run: cargo fmt --all -- --check
 
   clippy:
     name: Clippy
@@ -68,9 +70,10 @@ jobs:
           components: clippy
       - name: Cache build artifacts
         uses: Swatinem/rust-cache@v2.7.7
+
       - name: Check no lint warnings
-        run: cargo clippy -- -D warnings
+        run: cargo clippy --workspace -- -D warnings
       - name: Check no lint warnings (all features)
-        run: cargo clippy --all-features -- -D warnings
+        run: cargo clippy --workspace --all-features -- -D warnings
       - name: Check no lint warnings (no default features)
-        run: cargo clippy --no-default-features -- -D warnings
+        run: cargo clippy --workspace --no-default-features -- -D warnings

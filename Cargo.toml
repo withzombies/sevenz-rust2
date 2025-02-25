@@ -59,3 +59,6 @@ required-features = ["compress", "aes256"]
 [[example]]
 name = "advance"
 required-features = ["compress", "aes256"]
+
+[workspace]
+members = ["lzma-rust2"]

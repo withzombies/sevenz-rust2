@@ -1,3 +1,6 @@
+// TODO: There is a lot of code left that only the "encode" feature uses.
+#![allow(dead_code)]
+
 mod decoder;
 mod lz;
 mod lzma2_reader;
