@@ -189,6 +189,23 @@ fn test_compression_method(method: SevenZMethod) {
 
     assert_eq!(reader.archive().files.len(), 2);
 
+    let mut methods = Vec::<SevenZMethod>::new();
+
+    reader
+        .archive()
+        .files
+        .iter()
+        .filter(|file| !file.is_directory)
+        .for_each(|file| {
+            reader
+                .file_compression_methods(file.name(), &mut methods)
+                .expect("can't read compression method");
+        });
+
+    assert!(methods
+        .iter()
+        .all(|compression_method| compression_method.name() == method.name()));
+
     assert!(reader
         .archive()
         .files

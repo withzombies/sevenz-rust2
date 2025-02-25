@@ -1482,6 +1482,40 @@ impl<R: Read + Seek> SevenZReader<R> {
             }
         }
     }
+
+    /// Get the compression method(s) used for a specific file in the archive.
+    pub fn file_compression_methods(
+        &self,
+        file_name: &str,
+        methods: &mut Vec<SevenZMethod>,
+    ) -> Result<(), Error> {
+        let index_entry = self.index.get(file_name).ok_or(Error::FileNotFound)?;
+        let file = &self.archive.files[index_entry.file_index];
+
+        if !file.has_stream {
+            return Ok(());
+        }
+
+        let folder_index = index_entry
+            .folder_index
+            .ok_or_else(|| Error::other("File has no associated folder"))?;
+
+        let folder = self
+            .archive
+            .folders
+            .get(folder_index)
+            .ok_or_else(|| Error::other("Folder not found"))?;
+
+        folder
+            .coders
+            .iter()
+            .filter_map(|coder| SevenZMethod::by_id(coder.decompression_method_id()))
+            .for_each(|coder| {
+                methods.push(coder);
+            });
+
+        Ok(())
+    }
 }
 
 pub struct BlockDecoder<'a, R: Read + Seek> {
