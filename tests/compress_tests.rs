@@ -180,7 +180,7 @@ fn test_compression_method(method: SevenZMethod, option: impl Into<MethodOptions
 
         writer.push_archive_entry::<&[u8]>(folder, None).unwrap();
         writer.set_content_methods(vec![
-            SevenZMethodConfiguration::new(method).with_options(option.into())
+            SevenZMethodConfiguration::new(method).with_options(option.into()),
         ]);
         writer
             .push_archive_entry(file, Some(content.as_slice()))
@@ -205,20 +205,26 @@ fn test_compression_method(method: SevenZMethod, option: impl Into<MethodOptions
                 .expect("can't read compression method");
         });
 
-    assert!(methods
-        .iter()
-        .all(|compression_method| compression_method.name() == method.name()));
+    assert!(
+        methods
+            .iter()
+            .all(|compression_method| compression_method.name() == method.name())
+    );
 
-    assert!(reader
-        .archive()
-        .files
-        .iter()
-        .any(|file| file.name() == "data"));
-    assert!(reader
-        .archive()
-        .files
-        .iter()
-        .any(|file| file.name() == "data/decompress_x86.exe"));
+    assert!(
+        reader
+            .archive()
+            .files
+            .iter()
+            .any(|file| file.name() == "data")
+    );
+    assert!(
+        reader
+            .archive()
+            .files
+            .iter()
+            .any(|file| file.name() == "data/decompress_x86.exe")
+    );
 
     let data = reader.read_file("data/decompress_x86.exe").unwrap();
 

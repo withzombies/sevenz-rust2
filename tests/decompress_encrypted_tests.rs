@@ -13,7 +13,9 @@ fn test_decompress_file_with_password() {
     file1_path.push("encripted/7zFormat.txt");
     let r = decompress_file_with_password(source_file, target.as_path(), "sevenz-rust".into());
     assert!(r.is_ok());
-    assert!(read_to_string(file1_path)
-        .unwrap()
-        .starts_with("7z is the new archive format, providing high compression ratio."))
+    assert!(
+        read_to_string(file1_path)
+            .unwrap()
+            .starts_with("7z is the new archive format, providing high compression ratio.")
+    )
 }

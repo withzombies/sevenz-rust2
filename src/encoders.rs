@@ -1,16 +1,16 @@
 #[cfg(feature = "aes256")]
 use crate::aes256sha256::Aes256Sha256Encoder;
 use crate::{
+    Error,
     archive::{SevenZMethod, SevenZMethodConfiguration},
     lzma::CountingWriter,
     lzma::{LZMA2Options, LZMA2Writer, LZMAWriter},
     method_options::MethodOptions,
-    Error,
 };
 use std::io::Write;
 
 #[cfg(feature = "brotli")]
-use crate::{brotli::BrotliEncoder, BrotliOptions};
+use crate::{BrotliOptions, brotli::BrotliEncoder};
 
 #[cfg(feature = "bzip2")]
 use crate::Bzip2Options;

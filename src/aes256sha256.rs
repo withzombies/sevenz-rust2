@@ -3,7 +3,7 @@ use std::io::{Read, Seek, Write};
 #[cfg(feature = "compress")]
 pub use self::enc::*;
 use crate::Password;
-use aes::cipher::{generic_array::GenericArray, BlockDecryptMut, BlockEncryptMut, KeyIvInit};
+use aes::cipher::{BlockDecryptMut, BlockEncryptMut, KeyIvInit, generic_array::GenericArray};
 use lzma_rust2::CountingWriter;
 use sha2::Digest;
 

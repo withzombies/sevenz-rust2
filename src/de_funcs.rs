@@ -1,8 +1,9 @@
-use crate::{password::Password, Error, *};
+use crate::{Error, password::Password, *};
 use std::io::{Read, Seek};
 use std::path::{Path, PathBuf};
 
 /// Decompresses a 7z file.
+///
 /// # Example
 /// ```no_run
 /// sevenz_rust2::decompress_file("sample.7z", "sample").expect("complete");

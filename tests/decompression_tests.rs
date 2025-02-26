@@ -1,10 +1,10 @@
 use std::{
-    fs::{read, read_to_string, File},
+    fs::{File, read, read_to_string},
     path::PathBuf,
 };
 use tempfile::tempdir;
 
-use sevenz_rust2::{decompress_file, Archive, BlockDecoder, Password, SevenZReader};
+use sevenz_rust2::{Archive, BlockDecoder, Password, SevenZReader, decompress_file};
 
 #[test]
 fn decompress_single_empty_file_unencoded_header() {
@@ -153,9 +153,11 @@ fn decompress_zstdmt_brotli_file() {
 
     decompress_file(source_file, target).unwrap();
 
-    assert!(read_to_string(license_path)
-        .unwrap()
-        .contains("Apache License"));
+    assert!(
+        read_to_string(license_path)
+            .unwrap()
+            .contains("Apache License")
+    );
 }
 
 #[test]

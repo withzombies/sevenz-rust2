@@ -8,7 +8,7 @@ use crate::{
     delta::DeltaReader,
     error::Error,
     folder::Coder,
-    lzma::{lzma2_get_memory_usage, LZMA2Reader, LZMAReader},
+    lzma::{LZMA2Reader, LZMAReader, lzma2_get_memory_usage},
 };
 use byteorder::{LittleEndian, ReadBytesExt};
 #[cfg(feature = "bzip2")]
