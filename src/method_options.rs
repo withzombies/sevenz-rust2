@@ -6,6 +6,7 @@ use crate::aes256sha256::AesEncoderOptions;
 use std::fmt::Debug;
 
 #[cfg(feature = "bzip2")]
+#[cfg_attr(docsrs, doc(cfg(feature = "bzip2")))]
 #[derive(Debug, Copy, Clone)]
 pub struct Bzip2Options(pub(crate) u32);
 
@@ -29,6 +30,7 @@ const MINIMAL_SKIPPABLE_FRAME_SIZE: u32 = 64 * 1024;
 const DEFAULT_SKIPPABLE_FRAME_SIZE: u32 = 128 * 1024;
 
 #[cfg(feature = "brotli")]
+#[cfg_attr(docsrs, doc(cfg(feature = "brotli")))]
 #[derive(Debug, Copy, Clone)]
 pub struct BrotliOptions {
     pub(crate) quality: u32,
@@ -80,6 +82,7 @@ impl Default for BrotliOptions {
 }
 
 #[cfg(feature = "deflate")]
+#[cfg_attr(docsrs, doc(cfg(feature = "deflate")))]
 #[derive(Debug, Copy, Clone)]
 pub struct DeflateOptions(pub(crate) u32);
 
@@ -99,6 +102,7 @@ impl Default for DeflateOptions {
 }
 
 #[cfg(feature = "lz4")]
+#[cfg_attr(docsrs, doc(cfg(feature = "lz4")))]
 #[derive(Debug, Copy, Clone)]
 pub struct LZ4Options(pub(crate) u32);
 
@@ -124,6 +128,7 @@ impl Default for LZ4Options {
 }
 
 #[cfg(feature = "zstd")]
+#[cfg_attr(docsrs, doc(cfg(feature = "zstd")))]
 #[derive(Debug, Copy, Clone)]
 pub struct ZStandardOptions(pub(crate) u32);
 
@@ -146,18 +151,25 @@ impl Default for ZStandardOptions {
 pub enum MethodOptions {
     Num(u32),
     #[cfg(feature = "compress")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "compress")))]
     LZMA2(LZMA2Options),
     #[cfg(feature = "brotli")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "brotli")))]
     BROTLI(BrotliOptions),
     #[cfg(feature = "bzip2")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "bzip2")))]
     BZIP2(Bzip2Options),
     #[cfg(feature = "deflate")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "deflate")))]
     DEFLATE(DeflateOptions),
     #[cfg(feature = "lz4")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "lz4")))]
     LZ4(LZ4Options),
     #[cfg(feature = "zstd")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "zstd")))]
     ZSTD(ZStandardOptions),
     #[cfg(feature = "aes256")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "aes256")))]
     Aes(AesEncoderOptions),
 }
 

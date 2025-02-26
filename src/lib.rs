@@ -27,7 +27,8 @@
 //! | BCJ SPARC     | ✓             |             |
 //! | DELTA         | ✓             |             |
 //! | BCJ2          | ✓             |             |
-extern crate filetime_creation as ft;
+#![cfg_attr(docsrs, feature(doc_cfg))]
+
 #[cfg(target_arch = "wasm32")]
 extern crate wasm_bindgen;
 #[cfg(feature = "aes256")]
@@ -36,10 +37,10 @@ mod bcj;
 mod bcj2;
 #[cfg(feature = "brotli")]
 mod brotli;
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(all(feature = "util", not(target_arch = "wasm32")))]
 mod de_funcs;
 mod delta;
-#[cfg(feature = "compress")]
+#[cfg(all(feature = "compress", feature = "util"))]
 mod en_funcs;
 #[cfg(feature = "compress")]
 mod encoders;
@@ -55,9 +56,9 @@ mod writer;
 #[cfg(feature = "aes256")]
 pub use aes256sha256::*;
 pub use archive::*;
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(all(feature = "util", not(target_arch = "wasm32")))]
 pub use de_funcs::*;
-#[cfg(feature = "compress")]
+#[cfg(all(feature = "compress", feature = "util"))]
 pub use en_funcs::*;
 pub use error::Error;
 pub use lzma_rust2 as lzma;
@@ -68,6 +69,5 @@ pub use reader::{BlockDecoder, SevenZReader};
 #[cfg(feature = "compress")]
 pub use writer::*;
 pub(crate) mod archive;
-
 pub(crate) mod decoders;
 pub(crate) mod folder;

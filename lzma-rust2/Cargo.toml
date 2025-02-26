@@ -15,3 +15,7 @@ encoder = []
 
 [dependencies]
 byteorder = "1.5"
+
+[package.metadata.docs.rs]
+features = ["encoder"]
+rustdoc-args = ["--cfg", "docsrs"]

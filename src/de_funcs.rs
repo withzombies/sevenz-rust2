@@ -8,14 +8,14 @@ use std::path::{Path, PathBuf};
 /// sevenz_rust2::decompress_file("sample.7z", "sample").expect("complete");
 /// ```
 ///
-#[inline]
+#[cfg_attr(docsrs, doc(cfg(feature = "util")))]
 pub fn decompress_file(src_path: impl AsRef<Path>, dest: impl AsRef<Path>) -> Result<(), Error> {
     let file = std::fs::File::open(src_path.as_ref())
         .map_err(|e| Error::file_open(e, src_path.as_ref().to_string_lossy().to_string()))?;
     decompress(file, dest)
 }
 
-#[inline]
+#[cfg_attr(docsrs, doc(cfg(feature = "util")))]
 pub fn decompress_file_with_extract_fn(
     src_path: impl AsRef<Path>,
     dest: impl AsRef<Path>,
@@ -27,13 +27,13 @@ pub fn decompress_file_with_extract_fn(
 }
 
 /// Decompresses a source reader to `dest` path.
-#[inline]
+#[cfg_attr(docsrs, doc(cfg(feature = "util")))]
 pub fn decompress<R: Read + Seek>(src_reader: R, dest: impl AsRef<Path>) -> Result<(), Error> {
     decompress_with_extract_fn(src_reader, dest, default_entry_extract_fn)
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-#[inline]
+#[cfg_attr(docsrs, doc(cfg(feature = "util")))]
 pub fn decompress_with_extract_fn<R: Read + Seek>(
     src_reader: R,
     dest: impl AsRef<Path>,
@@ -49,7 +49,7 @@ pub fn decompress_with_extract_fn<R: Read + Seek>(
 /// ```no_run
 /// sevenz_rust2::decompress_file_with_password("sample.7z", "sample", "password".into()).expect("complete");
 /// ```
-#[inline]
+#[cfg_attr(docsrs, doc(cfg(all(feature = "aes256", feature = "util"))))]
 pub fn decompress_file_with_password(
     src_path: impl AsRef<Path>,
     dest: impl AsRef<Path>,
@@ -61,7 +61,7 @@ pub fn decompress_file_with_password(
 }
 
 #[cfg(all(feature = "aes256", not(target_arch = "wasm32")))]
-#[inline]
+#[cfg_attr(docsrs, doc(cfg(all(feature = "aes256", feature = "util"))))]
 pub fn decompress_with_password<R: Read + Seek>(
     src_reader: R,
     dest: impl AsRef<Path>,
@@ -71,6 +71,7 @@ pub fn decompress_with_password<R: Read + Seek>(
 }
 
 #[cfg(all(feature = "aes256", not(target_arch = "wasm32")))]
+#[cfg_attr(docsrs, doc(cfg(all(feature = "aes256", feature = "util"))))]
 pub fn decompress_with_extract_fn_and_password<R: Read + Seek>(
     src_reader: R,
     dest: impl AsRef<Path>,
@@ -105,6 +106,7 @@ fn decompress_impl<R: Read + Seek>(
 }
 
 #[cfg(not(target_arch = "wasm32"))]
+#[cfg_attr(docsrs, doc(cfg(feature = "util")))]
 pub fn default_entry_extract_fn(
     entry: &SevenZArchiveEntry,
     reader: &mut dyn Read,
@@ -131,13 +133,17 @@ pub fn default_entry_extract_fn(
         if entry.size() > 0 {
             let mut writer = BufWriter::new(file);
             std::io::copy(reader, &mut writer).map_err(Error::io)?;
-            ft::set_file_handle_times(
+            filetime_creation::set_file_handle_times(
                 writer.get_ref(),
-                Some(ft::FileTime::from_system_time(entry.access_date().into())),
-                Some(ft::FileTime::from_system_time(
+                Some(filetime_creation::FileTime::from_system_time(
+                    entry.access_date().into(),
+                )),
+                Some(filetime_creation::FileTime::from_system_time(
                     entry.last_modified_date().into(),
                 )),
-                Some(ft::FileTime::from_system_time(entry.creation_date().into())),
+                Some(filetime_creation::FileTime::from_system_time(
+                    entry.creation_date().into(),
+                )),
             )
             .unwrap_or_default();
         }

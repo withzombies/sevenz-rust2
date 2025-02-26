@@ -9,6 +9,7 @@ use std::{
 use crate::*;
 
 /// Helper function to compress `src` path to `dest` writer.
+#[cfg_attr(docsrs, doc(cfg(all(feature = "compress", feature = "util"))))]
 pub fn compress<W: Write + Seek>(src: impl AsRef<Path>, dest: W) -> Result<W, Error> {
     let mut z = SevenZWriter::new(dest)?;
     let parent = if src.as_ref().is_dir() {
@@ -21,6 +22,10 @@ pub fn compress<W: Write + Seek>(src: impl AsRef<Path>, dest: W) -> Result<W, Er
 }
 
 #[cfg(feature = "aes256")]
+#[cfg_attr(
+    docsrs,
+    doc(cfg(all(feature = "aes256", feature = "compress", feature = "util")))
+)]
 pub fn compress_encrypted<W: Write + Seek>(
     src: impl AsRef<Path>,
     dest: W,
@@ -43,6 +48,7 @@ pub fn compress_encrypted<W: Write + Seek>(
 }
 
 /// Helper function to compress `src` path to `dest` path.
+#[cfg_attr(docsrs, doc(cfg(all(feature = "compress", feature = "util"))))]
 pub fn compress_to_path(src: impl AsRef<Path>, dest: impl AsRef<Path>) -> Result<(), Error> {
     if let Some(p) = dest.as_ref().parent() {
         if !p.exists() {
@@ -59,6 +65,10 @@ pub fn compress_to_path(src: impl AsRef<Path>, dest: impl AsRef<Path>) -> Result
 }
 
 #[cfg(feature = "aes256")]
+#[cfg_attr(
+    docsrs,
+    doc(cfg(all(feature = "aes256", feature = "compress", feature = "util")))
+)]
 pub fn compress_to_path_encrypted(
     src: impl AsRef<Path>,
     dest: impl AsRef<Path>,
@@ -118,6 +128,7 @@ fn compress_path<W: Write + Seek, P: AsRef<Path>>(
 
 impl<W: Write + Seek> SevenZWriter<W> {
     /// Solid compression - compress all files in `path` with multiple files in one block.
+    #[cfg_attr(docsrs, doc(cfg(all(feature = "compress", feature = "util"))))]
     pub fn push_source_path(
         &mut self,
         path: impl AsRef<Path>,
@@ -128,6 +139,7 @@ impl<W: Write + Seek> SevenZWriter<W> {
     }
 
     /// Non-solid compression - compresses all files into `path` with one file per block.
+    #[cfg_attr(docsrs, doc(cfg(all(feature = "compress", feature = "util"))))]
     pub fn push_source_path_non_solid(
         &mut self,
         path: impl AsRef<Path>,

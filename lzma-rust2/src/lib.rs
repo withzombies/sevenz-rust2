@@ -1,5 +1,6 @@
 // TODO: There is a lot of code left that only the "encode" feature uses.
 #![allow(dead_code)]
+#![cfg_attr(docsrs, feature(doc_cfg))]
 
 mod decoder;
 mod lz;

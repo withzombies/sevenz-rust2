@@ -9,6 +9,7 @@ use sha2::Digest;
 
 type Aes256CbcDec = cbc::Decryptor<aes::Aes256>;
 
+#[cfg_attr(docsrs, doc(cfg(feature = "aes256")))]
 pub struct Aes256Sha256Decoder<R> {
     cipher: Cipher,
     input: R,
@@ -216,6 +217,8 @@ impl Cipher {
 mod enc {
     type Aes256CbcEnc = cbc::Encryptor<aes::Aes256>;
     use super::*;
+
+    #[cfg_attr(docsrs, doc(cfg(feature = "aes256")))]
     pub struct Aes256Sha256Encoder<W> {
         output: CountingWriter<W>,
         enc: Aes256CbcEnc,
@@ -223,6 +226,8 @@ mod enc {
         done: bool,
         write_size: u32,
     }
+
+    #[cfg_attr(docsrs, doc(cfg(feature = "aes256")))]
     #[derive(Debug, Clone)]
     pub struct AesEncoderOptions {
         pub password: Password,
