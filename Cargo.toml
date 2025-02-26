@@ -36,7 +36,7 @@ filetime_creation = "0.2"
 getrandom = { version = "0.3", optional = true }
 lzma-rust2 = { version = "0.1.8", default-features = false, path = "lzma-rust2" }
 lz4 = { version = "1.28", optional = true }
-nt-time = "0.10"
+nt-time = "0.11"
 sha2 = { version = "0.10", optional = true }
 zstd = { version = "0.13", optional = true }
 
