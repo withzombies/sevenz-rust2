@@ -309,7 +309,7 @@ impl From<LZ4Options> for crate::SevenZMethodConfiguration {
     }
 }
 
-#[cfg(feature = "lz4")]
+#[cfg(feature = "ppmd")]
 impl From<PPMDOptions> for crate::SevenZMethodConfiguration {
     fn from(options: PPMDOptions) -> Self {
         Self::new(crate::SevenZMethod::PPMD).with_options(MethodOptions::PPMD(options))
