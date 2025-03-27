@@ -1518,6 +1518,10 @@ impl<R: Read + Seek> SevenZReader<R> {
 
         Ok(())
     }
+
+    pub fn set_password(&mut self, password: Password) {
+        self.password = password.to_vec();
+    }
 }
 
 pub struct BlockDecoder<'a, R: Read + Seek> {
