@@ -1568,6 +1568,10 @@ impl<R: Read + Seek> ArchiveReader<R> {
 
         Ok(())
     }
+
+    pub fn set_password(&mut self, password: Password) {
+        self.password = password.to_vec();
+    }
 }
 
 /// Decoder for a specific block within a 7z archive.
