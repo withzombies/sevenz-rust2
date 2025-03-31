@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.13.0 - 2025-03-31
 
 ### Fixed
 
@@ -14,13 +14,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Moved `CountingWriter` from lzma2 to sevenz crate, since it was an internal implementation detail of the sevenz crate.
+- Moved `CountingWriter` from lzma to sevenz crate, since it was an internal implementation detail of the sevenz crate.
 - Remove implicit way to call `finish()` by `calling write(&[])` on the lzma and lzma2 writer. This was again an
   implementation detail of the sevenz. `finish()` now also takes `self`, like other compression libraries.
 
 ### Added
 
-- `LZMAWriter` and `LZMA2Writer` no expose the inner writer and also return it on calling `finish()`.
+- `LZMAWriter` and `LZMA2Writer` now expose the inner writer and also return it when calling `finish(self)`.
 
 ## 0.12.1 - 2025-03-10
 
