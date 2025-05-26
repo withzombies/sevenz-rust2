@@ -1,25 +1,25 @@
+#[cfg(feature = "aes256")]
+use crate::aes256sha256::Aes256Sha256Encoder;
 #[cfg(feature = "bzip2")]
 use crate::Bzip2Options;
 #[cfg(feature = "ppmd")]
 use crate::PPMDOptions;
-#[cfg(feature = "aes256")]
-use crate::aes256sha256::Aes256Sha256Encoder;
-#[cfg(feature = "brotli")]
-use crate::{BrotliOptions, brotli::BrotliEncoder};
 use crate::{
-    CountingWriter, DeltaOptions, Error,
-    archive::{SevenZMethod, SevenZMethodConfiguration},
-    lzma::{LZMA2Options, LZMA2Writer, LZMAWriter},
-    method_options::MethodOptions,
+    archive::{SevenZMethod, SevenZMethodConfiguration}, lzma::{LZMA2Options, LZMA2Writer, LZMAWriter}, method_options::MethodOptions,
+    CountingWriter,
+    DeltaOptions,
+    Error,
 };
+#[cfg(feature = "brotli")]
+use crate::{brotli::BrotliEncoder, BrotliOptions};
 
 use std::io::Write;
 
+use crate::delta::DeltaWriter;
 #[cfg(feature = "deflate")]
 use crate::DeflateOptions;
 #[cfg(feature = "lz4")]
 use crate::LZ4Options;
-use crate::delta::DeltaWriter;
 
 #[cfg(feature = "zstd")]
 use crate::ZStandardOptions;
@@ -373,7 +373,7 @@ pub(crate) fn get_lzma2_options<'a>(
     options: Option<&'a MethodOptions>,
     def_opt: &'a mut LZMA2Options,
 ) -> &'a LZMA2Options {
-    let options = match options.as_ref() {
+    match options.as_ref() {
         Some(MethodOptions::LZMA2(opts)) => opts,
         Some(MethodOptions::Num(n)) => {
             def_opt.dict_size = *n;
@@ -383,6 +383,5 @@ pub(crate) fn get_lzma2_options<'a>(
             def_opt.dict_size = LZMA2Options::DICT_SIZE_DEFAULT;
             def_opt
         }
-    };
-    options
+    }
 }

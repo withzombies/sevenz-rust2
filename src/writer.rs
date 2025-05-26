@@ -6,7 +6,7 @@ mod unpack_info;
 pub use self::counting::CountingWriter;
 pub use self::seq_reader::*;
 use self::{pack_info::PackInfo, unpack_info::UnpackInfo};
-use crate::{Error, SevenZArchiveEntry, archive::*, encoders};
+use crate::{archive::*, encoders, Error, SevenZArchiveEntry};
 use bit_set::BitSet;
 use byteorder::*;
 use crc32fast::Hasher;
@@ -412,7 +412,7 @@ impl<W: Write + Seek> SevenZWriter<W> {
         let mut compressed = CompressWrapWriter::new(&mut encoded_data, &mut compress_size);
         {
             let mut encoder = Self::create_writer(&methods, &mut compressed, &mut more_sizes)
-                .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
+                .map_err(std::io::Error::other)?;
             encoder.write_all(&raw_header)?;
             encoder.flush()?;
             let _ = encoder.write(&[])?;

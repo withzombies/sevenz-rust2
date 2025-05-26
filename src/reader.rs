@@ -6,7 +6,7 @@ use std::collections::HashMap;
 use std::rc::Rc;
 use std::{
     fs::File,
-    io::{ErrorKind, Read, Seek, SeekFrom},
+    io::{Read, Seek, SeekFrom},
 };
 
 const MAX_MEM_LIMIT_KB: usize = usize::MAX / 1024;
@@ -65,7 +65,7 @@ impl<R: Read + Seek> Seek for SeekableBoundedReader<R> {
             SeekFrom::Current(pos) => self.cur as i64 + pos,
         };
         if new_pos < 0 {
-            return Err(std::io::Error::new(ErrorKind::Other, "SeekBeforeStart"));
+            return Err(std::io::Error::other("SeekBeforeStart"));
         }
         self.cur = new_pos as u64;
         self.inner.seek(SeekFrom::Start(self.cur))
@@ -132,10 +132,7 @@ impl<R: Read> Read for Crc32VerifyingReader<R> {
         if self.remaining <= 0 {
             let d = std::mem::replace(&mut self.crc_digest, Hasher::new()).finalize();
             if d as u64 != self.expected_value {
-                return Err(std::io::Error::new(
-                    ErrorKind::Other,
-                    Error::ChecksumVerificationFailed,
-                ));
+                return Err(std::io::Error::other(Error::ChecksumVerificationFailed));
             }
         }
         Ok(size)
@@ -1441,7 +1438,7 @@ impl<R: Read + Seek> SevenZReader<R> {
                     let mut data = Vec::with_capacity(archive_entry.size as usize);
                     reader.read_to_end(&mut data)?;
 
-                    if archive_entry as *const _ == target_file_ptr {
+                    if std::ptr::eq(archive_entry, target_file_ptr) {
                         result = Some(data);
                         Ok(false)
                     } else {
