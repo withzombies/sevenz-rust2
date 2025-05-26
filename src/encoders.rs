@@ -1,25 +1,25 @@
-#[cfg(feature = "aes256")]
-use crate::aes256sha256::Aes256Sha256Encoder;
 #[cfg(feature = "bzip2")]
 use crate::Bzip2Options;
 #[cfg(feature = "ppmd")]
 use crate::PPMDOptions;
-use crate::{
-    archive::{SevenZMethod, SevenZMethodConfiguration}, lzma::{LZMA2Options, LZMA2Writer, LZMAWriter}, method_options::MethodOptions,
-    CountingWriter,
-    DeltaOptions,
-    Error,
-};
+#[cfg(feature = "aes256")]
+use crate::aes256sha256::Aes256Sha256Encoder;
 #[cfg(feature = "brotli")]
-use crate::{brotli::BrotliEncoder, BrotliOptions};
+use crate::{BrotliOptions, brotli::BrotliEncoder};
+use crate::{
+    CountingWriter, DeltaOptions, Error,
+    archive::{SevenZMethod, SevenZMethodConfiguration},
+    lzma::{LZMA2Options, LZMA2Writer, LZMAWriter},
+    method_options::MethodOptions,
+};
 
 use std::io::Write;
 
-use crate::delta::DeltaWriter;
 #[cfg(feature = "deflate")]
 use crate::DeflateOptions;
 #[cfg(feature = "lz4")]
 use crate::LZ4Options;
+use crate::delta::DeltaWriter;
 
 #[cfg(feature = "zstd")]
 use crate::ZStandardOptions;
