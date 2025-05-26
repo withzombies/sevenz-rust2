@@ -29,7 +29,7 @@ pub enum Decoder<R: Read> {
     LZMA(LZMAReader<R>),
     LZMA2(LZMA2Reader<R>),
     #[cfg(feature = "ppmd")]
-    PPMD(Ppmd7Decoder<R>),
+    PPMD(Box<Ppmd7Decoder<R>>),
     BCJ(SimpleReader<R>),
     Delta(DeltaReader<R>),
     #[cfg(feature = "brotli")]
@@ -118,7 +118,7 @@ pub fn add_decoder<I: Read>(
             let (order, memory_size) = get_ppmd_order_memory_size(coder, max_mem_limit_kb)?;
             let ppmd = Ppmd7Decoder::new(input, order, memory_size)
                 .map_err(|err| Error::other(err.to_string()))?;
-            Ok(Decoder::PPMD(ppmd))
+            Ok(Decoder::PPMD(Box::new(ppmd)))
         }
         #[cfg(feature = "brotli")]
         SevenZMethod::ID_BROTLI => {

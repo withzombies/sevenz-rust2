@@ -31,7 +31,7 @@ pub enum Encoder<W: Write> {
     LZMA(Option<LZMAWriter<CountingWriter<W>>>),
     LZMA2(Option<LZMA2Writer<CountingWriter<W>>>),
     #[cfg(feature = "ppmd")]
-    PPMD(ppmd_rust::Ppmd7Encoder<CountingWriter<W>>),
+    PPMD(Box<ppmd_rust::Ppmd7Encoder<CountingWriter<W>>>),
     #[cfg(feature = "brotli")]
     BROTLI(BrotliEncoder<CountingWriter<W>>),
     #[cfg(feature = "bzip2")]
@@ -188,7 +188,7 @@ pub(crate) fn add_encoder<W: Write>(
                 ppmd_rust::Ppmd7Encoder::new(input, options.order, options.memory_size)
                     .map_err(|err| Error::other(err.to_string()))?;
 
-            Ok(Encoder::PPMD(ppmd_encoder))
+            Ok(Encoder::PPMD(Box::new(ppmd_encoder)))
         }
         #[cfg(feature = "brotli")]
         SevenZMethod::ID_BROTLI => {
