@@ -27,6 +27,7 @@ This is a fork of the original, unmaintained sevenz-rust crate to continue the d
 | BCJ PPC       | ✓             |             |
 | BCJ IA64      | ✓             |             |
 | BCJ ARM       | ✓             |             |
+| BCJ ARM64     | ✓             |             |
 | BCJ ARM_THUMB | ✓             |             |
 | BCJ SPARC     | ✓             |             |
 | DELTA         | ✓             | ✓           |

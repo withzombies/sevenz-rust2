@@ -25,6 +25,7 @@
 //! | BCJ PPC       | ✓             |             |
 //! | BCJ IA64      | ✓             |             |
 //! | BCJ ARM       | ✓             |             |
+//! | BCJ ARM64     | ✓             |             |
 //! | BCJ ARM_THUMB | ✓             |             |
 //! | BCJ SPARC     | ✓             |             |
 //! | DELTA         | ✓             | ✓           |
