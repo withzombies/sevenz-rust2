@@ -10,8 +10,8 @@ fn compress_multi_files_solid() {
     let mut files = Vec::with_capacity(100);
     let mut contents = Vec::with_capacity(100);
     for i in 1..=10000 {
-        let name = format!("file{}.txt", i);
-        let content = format!("file{} with content", i);
+        let name = format!("file{i}.txt");
+        let content = format!("file{i} with content");
         std::fs::write(folder.join(&name), &content).unwrap();
         files.push(name);
         contents.push(content);
@@ -45,8 +45,8 @@ fn compress_multi_files_mix_solid_and_non_solid() {
     let mut files = Vec::with_capacity(100);
     let mut contents = Vec::with_capacity(100);
     for i in 1..=100 {
-        let name = format!("file{}.txt", i);
-        let content = format!("file{} with content", i);
+        let name = format!("file{i}.txt");
+        let content = format!("file{i} with content");
         std::fs::write(folder.join(&name), &content).unwrap();
         files.push(name);
         contents.push(content);
@@ -60,8 +60,8 @@ fn compress_multi_files_mix_solid_and_non_solid() {
 
     // non solid compression
     for i in 101..=200 {
-        let name = format!("file{}.txt", i);
-        let content = format!("file{} with content", i);
+        let name = format!("file{i}.txt");
+        let content = format!("file{i} with content");
         std::fs::write(folder.join(&name), &content).unwrap();
         files.push(name.clone());
         contents.push(content);

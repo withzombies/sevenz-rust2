@@ -523,8 +523,7 @@ impl Archive {
                     let external = read_u8(header)?;
                     if external != 0 {
                         return Err(Error::other(format!(
-                            "kCTime Unimplemented:external={}",
-                            external
+                            "kCTime Unimplemented:external={external}"
                         )));
                     }
                     for (i, file) in files.iter_mut().enumerate() {
@@ -539,8 +538,7 @@ impl Archive {
                     let external = read_u8(header)?;
                     if external != 0 {
                         return Err(Error::other(format!(
-                            "kATime Unimplemented:external={}",
-                            external
+                            "kATime Unimplemented:external={external}"
                         )));
                     }
                     for (i, file) in files.iter_mut().enumerate() {
@@ -555,8 +553,7 @@ impl Archive {
                     let external = read_u8(header)?;
                     if external != 0 {
                         return Err(Error::other(format!(
-                            "kMTime Unimplemented:external={}",
-                            external
+                            "kMTime Unimplemented:external={external}"
                         )));
                     }
                     for (i, file) in files.iter_mut().enumerate() {
@@ -571,8 +568,7 @@ impl Archive {
                     let external = read_u8(header)?;
                     if external != 0 {
                         return Err(Error::other(format!(
-                            "kWinAttributes Unimplemented:external={}",
-                            external
+                            "kWinAttributes Unimplemented:external={external}"
                         )));
                     }
                     for (i, file) in files.iter_mut().enumerate() {
@@ -737,7 +733,7 @@ impl Archive {
     fn read_unpack_info<R: Read>(header: &mut R, archive: &mut Archive) -> Result<(), Error> {
         let nid = read_u8(header)?;
         if nid != K_FOLDER {
-            return Err(Error::other(format!("Expected kFolder, got {}", nid)));
+            return Err(Error::other(format!("Expected kFolder, got {nid}")));
         }
         let num_folders = read_usize(header, "num folders")?;
 
@@ -754,8 +750,7 @@ impl Archive {
         let nid = read_u8(header)?;
         if nid != K_CODERS_UNPACK_SIZE {
             return Err(Error::other(format!(
-                "Expected kCodersUnpackSize, got {}",
-                nid
+                "Expected kCodersUnpackSize, got {nid}"
             )));
         }
 
@@ -988,7 +983,7 @@ fn read_usize<R: Read>(reader: &mut R, field: &str) -> Result<usize, Error> {
 #[inline]
 fn assert_usize(size: u64, field: &str) -> Result<usize, Error> {
     if size > usize::MAX as u64 {
-        return Err(Error::other(format!("Cannot handle {} {}", field, size)));
+        return Err(Error::other(format!("Cannot handle {field} {size}")));
     }
     Ok(size as usize)
 }
@@ -1286,7 +1281,7 @@ impl<R: Read + Seek> SevenZReader<R> {
 
         let id = folder.coders[main_coder_index].decompression_method_id();
         if id != SevenZMethod::ID_BCJ2 {
-            return Err(Error::unsupported(format!("Unsupported method: {:?}", id)));
+            return Err(Error::unsupported(format!("Unsupported method: {id:?}")));
         }
 
         let num_in_streams = folder.coders[main_coder_index].num_in_streams as usize;
@@ -1341,8 +1336,7 @@ impl<R: Read + Seek> SevenZReader<R> {
             .find_bind_pair_for_in_stream(in_stream_index)
             .ok_or_else(|| {
                 Error::other(format!(
-                    "Couldn't find bind pair for stream {}",
-                    in_stream_index
+                    "Couldn't find bind pair for stream {in_stream_index}"
                 ))
             })?;
         let index = folder.bind_pairs[bp].out_index as usize;

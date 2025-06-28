@@ -277,7 +277,7 @@ impl<W: Write + Seek> SevenZWriter<W> {
                         break;
                     }
                 }
-                Error::io_msg(e, format!("Encode entry:{}", names))
+                Error::io_msg(e, format!("Encode entry:{names}"))
             })?;
             w.write(&[]).map_err(|e| {
                 Error::io_msg(e, format!("Encode entry:{}", entries_names(&entries)))

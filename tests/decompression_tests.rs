@@ -243,7 +243,7 @@ fn test_entry_compressed_size() {
     for entry in dir {
         let path = entry.unwrap().path();
         if path.to_string_lossy().ends_with("7z") {
-            println!("{:?}", path);
+            println!("{path:?}");
             let mut file = File::open(path).unwrap();
             let archive = Archive::read(&mut file, &[]).unwrap();
             for i in 0..archive.folders.len() {

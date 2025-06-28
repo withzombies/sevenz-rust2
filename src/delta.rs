@@ -139,8 +139,7 @@ mod tests {
 
                 assert_eq!(
                     original_data, &decoded_data,
-                    "Roundtrip failed for distance {} with data set {}",
-                    distance, i
+                    "Roundtrip failed for distance {distance} with data set {i}",
                 );
             }
         }

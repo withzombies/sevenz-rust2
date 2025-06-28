@@ -49,7 +49,7 @@ fn main() {
     assert!(dest.exists());
     let dest_file = std::fs::File::open(&dest).unwrap();
     let m = dest_file.metadata().unwrap();
-    println!("src  file len:{:?}", unpack_size);
+    println!("src  file len:{unpack_size:?}");
     println!("dest file len:{:?}", m.len());
     println!("ratio:{:?}", m.len() as f64 / unpack_size as f64);
 
