@@ -1,29 +1,35 @@
 use std::io::Write;
 
-#[cfg(feature = "bzip2")]
-use crate::Bzip2Options;
-#[cfg(feature = "deflate")]
-use crate::DeflateOptions;
-#[cfg(feature = "ppmd")]
-use crate::PPMDOptions;
-#[cfg(feature = "zstd")]
-use crate::ZStandardOptions;
-#[cfg(feature = "aes256")]
-use crate::aes256sha256::Aes256Sha256Encoder;
+use lzma_rust2::{LZMA2Options, LZMA2Writer, LZMAWriter};
+
 #[cfg(feature = "brotli")]
-use crate::{BrotliOptions, brotli::BrotliEncoder};
-use crate::{
-    CountingWriter, DeltaOptions, Error,
-    archive::{SevenZMethod, SevenZMethodConfiguration},
-    delta::DeltaWriter,
-    lzma::{LZMA2Options, LZMA2Writer, LZMAWriter},
-    method_options::MethodOptions,
-};
+use crate::codec::brotli::BrotliEncoder;
 #[cfg(feature = "lz4")]
-use crate::{LZ4Options, lz4::Lz4Encoder};
+use crate::codec::lz4::Lz4Encoder;
+#[cfg(feature = "brotli")]
+use crate::encoder_options::BrotliOptions;
+#[cfg(feature = "bzip2")]
+use crate::encoder_options::Bzip2Options;
+#[cfg(feature = "deflate")]
+use crate::encoder_options::DeflateOptions;
+#[cfg(feature = "lz4")]
+use crate::encoder_options::LZ4Options;
+#[cfg(feature = "ppmd")]
+use crate::encoder_options::PPMDOptions;
+#[cfg(feature = "zstd")]
+use crate::encoder_options::ZStandardOptions;
+#[cfg(feature = "aes256")]
+use crate::encryption::Aes256Sha256Encoder;
+use crate::filter::delta::DeltaWriter;
+use crate::{
+    Error,
+    archive::{EncoderConfiguration, EncoderMethod},
+    encoder_options::{DeltaOptions, EncoderOptions},
+    writer::CountingWriter,
+};
 
 #[allow(clippy::upper_case_acronyms)]
-pub enum Encoder<W: Write> {
+pub(crate) enum Encoder<W: Write> {
     COPY(CountingWriter<W>),
     DELTA(DeltaWriter<CountingWriter<W>>),
     LZMA(Option<LZMAWriter<CountingWriter<W>>>),
@@ -157,36 +163,36 @@ impl<W: Write> Write for Encoder<W> {
 
 pub(crate) fn add_encoder<W: Write>(
     input: CountingWriter<W>,
-    method_config: &SevenZMethodConfiguration,
+    method_config: &EncoderConfiguration,
 ) -> Result<Encoder<W>, Error> {
     let method = method_config.method;
 
     match method.id() {
-        SevenZMethod::ID_COPY => Ok(Encoder::COPY(input)),
-        SevenZMethod::ID_DELTA => {
+        EncoderMethod::ID_COPY => Ok(Encoder::COPY(input)),
+        EncoderMethod::ID_DELTA => {
             let options = match method_config.options {
-                Some(MethodOptions::Delta(options)) => options,
+                Some(EncoderOptions::Delta(options)) => options,
                 _ => DeltaOptions::default(),
             };
             let dw = DeltaWriter::new(input, options.0 as usize);
             Ok(Encoder::DELTA(dw))
         }
-        SevenZMethod::ID_LZMA => {
+        EncoderMethod::ID_LZMA => {
             let mut def_opts = LZMA2Options::default();
             let options = get_lzma2_options(method_config.options.as_ref(), &mut def_opts);
             let lz = LZMAWriter::new_no_header(input, options, false).map_err(Error::io)?;
             Ok(Encoder::LZMA(Some(lz)))
         }
-        SevenZMethod::ID_LZMA2 => {
+        EncoderMethod::ID_LZMA2 => {
             let mut def_opts = LZMA2Options::default();
             let options = get_lzma2_options(method_config.options.as_ref(), &mut def_opts);
             let lz = LZMA2Writer::new(input, options);
             Ok(Encoder::LZMA2(Some(lz)))
         }
         #[cfg(feature = "ppmd")]
-        SevenZMethod::ID_PPMD => {
+        EncoderMethod::ID_PPMD => {
             let options = match method_config.options {
-                Some(MethodOptions::PPMD(options)) => options,
+                Some(EncoderOptions::PPMD(options)) => options,
                 _ => PPMDOptions::default(),
             };
 
@@ -197,9 +203,9 @@ pub(crate) fn add_encoder<W: Write>(
             Ok(Encoder::PPMD(Some(Box::new(ppmd_encoder))))
         }
         #[cfg(feature = "brotli")]
-        SevenZMethod::ID_BROTLI => {
+        EncoderMethod::ID_BROTLI => {
             let options = match method_config.options {
-                Some(MethodOptions::BROTLI(options)) => options,
+                Some(EncoderOptions::BROTLI(options)) => options,
                 _ => BrotliOptions::default(),
             };
 
@@ -213,9 +219,9 @@ pub(crate) fn add_encoder<W: Write>(
             Ok(Encoder::BROTLI(brotli_encoder))
         }
         #[cfg(feature = "bzip2")]
-        SevenZMethod::ID_BZIP2 => {
+        EncoderMethod::ID_BZIP2 => {
             let options = match method_config.options {
-                Some(MethodOptions::BZIP2(options)) => options,
+                Some(EncoderOptions::BZIP2(options)) => options,
                 _ => Bzip2Options::default(),
             };
 
@@ -225,9 +231,9 @@ pub(crate) fn add_encoder<W: Write>(
             Ok(Encoder::BZIP2(Some(bzip2_encoder)))
         }
         #[cfg(feature = "deflate")]
-        SevenZMethod::ID_DEFLATE => {
+        EncoderMethod::ID_DEFLATE => {
             let options = match method_config.options {
-                Some(MethodOptions::DEFLATE(options)) => options,
+                Some(EncoderOptions::DEFLATE(options)) => options,
                 _ => DeflateOptions::default(),
             };
 
@@ -236,9 +242,9 @@ pub(crate) fn add_encoder<W: Write>(
             Ok(Encoder::DEFLATE(Some(deflate_encoder)))
         }
         #[cfg(feature = "lz4")]
-        SevenZMethod::ID_LZ4 => {
+        EncoderMethod::ID_LZ4 => {
             let options = match method_config.options.as_ref() {
-                Some(MethodOptions::LZ4(options)) => *options,
+                Some(EncoderOptions::LZ4(options)) => *options,
                 _ => LZ4Options::default(),
             };
 
@@ -247,9 +253,9 @@ pub(crate) fn add_encoder<W: Write>(
             Ok(Encoder::LZ4(Some(lz4_encoder)))
         }
         #[cfg(feature = "zstd")]
-        SevenZMethod::ID_ZSTD => {
+        EncoderMethod::ID_ZSTD => {
             let options = match method_config.options.as_ref() {
-                Some(MethodOptions::ZSTD(options)) => *options,
+                Some(EncoderOptions::ZSTD(options)) => *options,
                 _ => ZStandardOptions::default(),
             };
 
@@ -258,9 +264,9 @@ pub(crate) fn add_encoder<W: Write>(
             Ok(Encoder::ZSTD(Some(zstd_encoder)))
         }
         #[cfg(feature = "aes256")]
-        SevenZMethod::ID_AES256SHA256 => {
+        EncoderMethod::ID_AES256SHA256 => {
             let options = match method_config.options.as_ref() {
-                Some(MethodOptions::Aes(p)) => p,
+                Some(EncoderOptions::Aes(p)) => p,
                 _ => return Err(Error::PasswordRequired),
             };
             Ok(Encoder::AES(Aes256Sha256Encoder::new(input, options)?))
@@ -272,21 +278,21 @@ pub(crate) fn add_encoder<W: Write>(
 }
 
 pub(crate) fn get_options_as_properties<'a>(
-    method: SevenZMethod,
-    options: Option<&MethodOptions>,
+    method: EncoderMethod,
+    options: Option<&EncoderOptions>,
     out: &'a mut [u8],
 ) -> &'a [u8] {
     match method.id() {
-        SevenZMethod::ID_DELTA => {
+        EncoderMethod::ID_DELTA => {
             let options = match options {
-                Some(MethodOptions::Delta(options)) => *options,
+                Some(EncoderOptions::Delta(options)) => *options,
                 _ => DeltaOptions::default(),
             };
 
             out[0] = options.0.saturating_sub(1) as u8;
             &out[0..1]
         }
-        SevenZMethod::ID_LZMA2 => {
+        EncoderMethod::ID_LZMA2 => {
             let dict_size = options
                 .map(|o| o.get_lzma2_dict_size())
                 .unwrap_or(LZMA2Options::DICT_SIZE_DEFAULT);
@@ -296,7 +302,7 @@ pub(crate) fn get_options_as_properties<'a>(
             out[0] = prop;
             &out[0..1]
         }
-        SevenZMethod::ID_LZMA => {
+        EncoderMethod::ID_LZMA => {
             let mut def_opts = LZMA2Options::default();
             let options = get_lzma2_options(options, &mut def_opts);
             let dict_size = options.dict_size;
@@ -305,9 +311,9 @@ pub(crate) fn get_options_as_properties<'a>(
             &out[0..5]
         }
         #[cfg(feature = "ppmd")]
-        SevenZMethod::ID_PPMD => {
+        EncoderMethod::ID_PPMD => {
             let options = match options {
-                Some(MethodOptions::PPMD(options)) => *options,
+                Some(EncoderOptions::PPMD(options)) => *options,
                 _ => PPMDOptions::default(),
             };
 
@@ -316,11 +322,11 @@ pub(crate) fn get_options_as_properties<'a>(
             &out[0..5]
         }
         #[cfg(feature = "brotli")]
-        SevenZMethod::ID_BROTLI => {
+        EncoderMethod::ID_BROTLI => {
             let version_major = brotli::VERSION;
             let version_minor = 0;
             let options = match options {
-                Some(MethodOptions::BROTLI(options)) => *options,
+                Some(EncoderOptions::BROTLI(options)) => *options,
                 _ => BrotliOptions::default(),
             };
 
@@ -330,7 +336,7 @@ pub(crate) fn get_options_as_properties<'a>(
             &out[0..3]
         }
         #[cfg(feature = "lz4")]
-        SevenZMethod::ID_LZ4 => {
+        EncoderMethod::ID_LZ4 => {
             // Since we use lz4_flex, we only support one compression level
             // and set the version to 1.0 for best compatibility.
             out[0] = 1; // Major version
@@ -339,11 +345,11 @@ pub(crate) fn get_options_as_properties<'a>(
             &out[0..3]
         }
         #[cfg(feature = "zstd")]
-        SevenZMethod::ID_ZSTD => {
+        EncoderMethod::ID_ZSTD => {
             let version_major = zstd::zstd_safe::VERSION_MAJOR;
             let version_minor = zstd::zstd_safe::VERSION_MINOR;
             let options = match options {
-                Some(MethodOptions::ZSTD(options)) => *options,
+                Some(EncoderOptions::ZSTD(options)) => *options,
                 _ => ZStandardOptions::default(),
             };
 
@@ -353,9 +359,9 @@ pub(crate) fn get_options_as_properties<'a>(
             &out[0..3]
         }
         #[cfg(feature = "aes256")]
-        SevenZMethod::ID_AES256SHA256 => {
+        EncoderMethod::ID_AES256SHA256 => {
             let options = match options.as_ref() {
-                Some(MethodOptions::Aes(p)) => p,
+                Some(EncoderOptions::Aes(p)) => p,
                 _ => return &[],
             };
             options.write_properties(out);
@@ -367,12 +373,12 @@ pub(crate) fn get_options_as_properties<'a>(
 
 #[inline]
 pub(crate) fn get_lzma2_options<'a>(
-    options: Option<&'a MethodOptions>,
+    options: Option<&'a EncoderOptions>,
     def_opt: &'a mut LZMA2Options,
 ) -> &'a LZMA2Options {
     match options.as_ref() {
-        Some(MethodOptions::LZMA2(opts)) => opts,
-        Some(MethodOptions::Num(n)) => {
+        Some(EncoderOptions::LZMA2(opts)) => opts,
+        Some(EncoderOptions::Num(n)) => {
             def_opt.dict_size = *n;
             def_opt
         }

@@ -34,45 +34,39 @@
 
 #[cfg(target_arch = "wasm32")]
 extern crate wasm_bindgen;
-#[cfg(feature = "aes256")]
-mod aes256sha256;
-mod bcj;
-mod bcj2;
-#[cfg(feature = "brotli")]
-mod brotli;
-#[cfg(all(feature = "util", not(target_arch = "wasm32")))]
-mod de_funcs;
-mod delta;
-#[cfg(all(feature = "compress", feature = "util"))]
-mod en_funcs;
+
 #[cfg(feature = "compress")]
-mod encoders;
+mod encoder;
+/// Encoding options when compressing.
+#[cfg_attr(docsrs, doc(cfg(feature = "compress")))]
+#[cfg(feature = "compress")]
+pub mod encoder_options;
+mod encryption;
 mod error;
-#[cfg(feature = "lz4")]
-mod lz4;
-mod method_options;
-mod password;
 mod reader;
-#[cfg(target_arch = "wasm32")]
-mod wasm;
+
 #[cfg(feature = "compress")]
 mod writer;
 
-#[cfg(feature = "aes256")]
-pub use aes256sha256::*;
+pub(crate) mod archive;
+mod codec;
+pub(crate) mod decoder;
+mod filter;
+pub(crate) mod folder;
+
+#[cfg(feature = "util")]
+mod util;
+
 pub use archive::*;
-#[cfg(all(feature = "util", not(target_arch = "wasm32")))]
-pub use de_funcs::*;
-#[cfg(all(feature = "compress", feature = "util"))]
-pub use en_funcs::*;
+pub use encryption::Password;
 pub use error::Error;
-pub use lzma_rust2 as lzma;
-pub use method_options::*;
 pub use nt_time;
-pub use password::Password;
-pub use reader::{BlockDecoder, SevenZReader};
+pub use reader::{ArchiveReader, BlockDecoder};
+#[cfg(all(feature = "compress", feature = "util", not(target_arch = "wasm32")))]
+pub use util::compress::*;
+#[cfg(all(feature = "util", not(target_arch = "wasm32")))]
+pub use util::decompress::*;
+#[cfg(all(feature = "util", target_arch = "wasm32"))]
+pub use util::wasm::*;
 #[cfg(feature = "compress")]
 pub use writer::*;
-pub(crate) mod archive;
-pub(crate) mod decoders;
-pub(crate) mod folder;

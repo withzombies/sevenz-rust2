@@ -1,16 +1,22 @@
-use std::io::{Read, Seek, Write};
-
-use aes::cipher::{BlockDecryptMut, BlockEncryptMut, KeyIvInit, generic_array::GenericArray};
-use sha2::Digest;
-
-#[cfg(feature = "compress")]
-pub use self::enc::*;
 use crate::Password;
 
-type Aes256CbcDec = cbc::Decryptor<aes::Aes256>;
+#[cfg(feature = "compress")]
+use crate::encoder_options::AesEncoderOptions;
 
-#[cfg_attr(docsrs, doc(cfg(feature = "aes256")))]
-pub struct Aes256Sha256Decoder<R> {
+use aes::Aes256;
+use aes::cipher::{BlockDecryptMut, KeyIvInit, generic_array::GenericArray};
+use sha2::Digest;
+use std::io::{Read, Seek, Write};
+
+#[cfg(feature = "compress")]
+use aes::cipher::BlockEncryptMut;
+
+type Aes256CbcDec = cbc::Decryptor<Aes256>;
+
+#[cfg(feature = "compress")]
+type Aes256CbcEnc = cbc::Encryptor<Aes256>;
+
+pub(crate) struct Aes256Sha256Decoder<R> {
     cipher: Cipher,
     input: R,
     done: bool,
@@ -21,8 +27,12 @@ pub struct Aes256Sha256Decoder<R> {
 }
 
 impl<R: Read> Aes256Sha256Decoder<R> {
-    pub fn new(input: R, properties: &[u8], password: &[u8]) -> Result<Self, crate::Error> {
-        let cipher = Cipher::from_properties(properties, password)?;
+    pub(crate) fn new(
+        input: R,
+        properties: &[u8],
+        password: &Password,
+    ) -> Result<Self, crate::Error> {
+        let cipher = Cipher::from_properties(properties, password.as_slice())?;
         Ok(Self {
             input,
             cipher,
@@ -213,169 +223,124 @@ impl Cipher {
         }
     }
 }
+
+#[cfg_attr(docsrs, doc(cfg(feature = "aes256")))]
 #[cfg(feature = "compress")]
-mod enc {
-    type Aes256CbcEnc = cbc::Encryptor<aes::Aes256>;
+pub(crate) struct Aes256Sha256Encoder<W> {
+    output: W,
+    enc: Aes256CbcEnc,
+    buffer: Vec<u8>,
+    finished: bool,
+    write_size: u32,
+}
 
-    use super::*;
+#[cfg(feature = "compress")]
+impl<W> Aes256Sha256Encoder<W> {
+    pub(crate) fn new(output: W, options: &AesEncoderOptions) -> Result<Self, crate::Error> {
+        let (key, iv) = crate::encryption::aes::get_aes_key(
+            &options.properties(),
+            options.password.as_slice(),
+        )?;
 
-    #[cfg_attr(docsrs, doc(cfg(feature = "aes256")))]
-    pub struct Aes256Sha256Encoder<W> {
-        output: W,
-        enc: Aes256CbcEnc,
-        buffer: Vec<u8>,
-        finished: bool,
-        write_size: u32,
+        Ok(Self {
+            output,
+            enc: Aes256CbcEnc::new(&GenericArray::from(key), &iv.into()),
+            buffer: Default::default(),
+            finished: false,
+            write_size: 0,
+        })
     }
 
-    #[cfg_attr(docsrs, doc(cfg(feature = "aes256")))]
-    #[derive(Debug, Clone)]
-    pub struct AesEncoderOptions {
-        pub password: Password,
-        pub iv: [u8; 16],
-        pub salt: [u8; 16],
-        pub num_cycles_power: u8,
-    }
-
-    impl AesEncoderOptions {
-        pub fn new(password: Password) -> Self {
-            let mut iv = [0; 16];
-            getrandom::fill(&mut iv).expect("Can't generate IV");
-
-            let mut salt = [0; 16];
-            getrandom::fill(&mut salt).expect("Can't generate salt");
-
-            Self {
-                password,
-                iv,
-                salt,
-                num_cycles_power: 8,
-            }
-        }
-
-        pub fn properties(&self) -> [u8; 34] {
-            let mut props = [0u8; 34];
-            self.write_properties(&mut props);
-            props
-        }
-
-        #[inline]
-        pub fn write_properties(&self, props: &mut [u8]) {
-            assert!(props.len() >= 34);
-            props[0] = (self.num_cycles_power & 0x3F) | 0xC0;
-            props[1] = 0xFF;
-            props[2..18].copy_from_slice(&self.salt);
-            props[18..34].copy_from_slice(&self.iv);
-        }
-    }
-
-    impl<W> Aes256Sha256Encoder<W> {
-        pub fn new(output: W, options: &AesEncoderOptions) -> Result<Self, crate::Error> {
-            let (key, iv) = get_aes_key(&options.properties(), options.password.as_slice())?;
-
-            Ok(Self {
-                output,
-                enc: Aes256CbcEnc::new(&GenericArray::from(key), &iv.into()),
-                buffer: Default::default(),
-                finished: false,
-                write_size: 0,
-            })
-        }
-
-        #[inline(always)]
-        fn write_block(&mut self, block: &mut [u8]) -> std::io::Result<()>
-        where
-            W: Write,
-        {
-            let block2 = GenericArray::from_mut_slice(block);
-            self.enc.encrypt_block_mut(block2);
-            self.output.write_all(block)?;
-            self.write_size += block.len() as u32;
-            Ok(())
-        }
-    }
-
-    impl<W: Write> Write for Aes256Sha256Encoder<W> {
-        fn write(&mut self, mut buf: &[u8]) -> std::io::Result<usize> {
-            if self.finished && !buf.is_empty() {
-                return Ok(0);
-            }
-            if buf.is_empty() {
-                self.finished = true;
-                self.flush()?;
-                return self.output.write(buf);
-            }
-            let len = buf.len();
-            if !self.buffer.is_empty() {
-                assert!(self.buffer.len() < 16);
-                if buf.len() + self.buffer.len() >= 16 {
-                    let buffer = &self.buffer[..];
-                    let end = 16 - buffer.len();
-
-                    let mut block = [0u8; 16];
-                    block[0..buffer.len()].copy_from_slice(buffer);
-                    block[buffer.len()..16].copy_from_slice(&buf[..end]);
-                    self.write_block(&mut block)?;
-                    self.buffer.clear();
-                    buf = &buf[end..];
-                } else {
-                    self.buffer.extend_from_slice(buf);
-                    return Ok(len);
-                }
-            }
-
-            for data in buf.chunks(16) {
-                if data.len() < 16 {
-                    self.buffer.extend_from_slice(data);
-                    break;
-                }
-                let mut block = [0u8; 16];
-                block.copy_from_slice(data);
-                self.write_block(&mut block)?;
-            }
-
-            Ok(len)
-        }
-
-        fn flush(&mut self) -> std::io::Result<()> {
-            if !self.buffer.is_empty() && self.finished {
-                assert!(self.buffer.len() < 16);
-                let mut block = [0u8; 16];
-                block[..self.buffer.len()].copy_from_slice(&self.buffer);
-                self.write_block(&mut block)?;
-                self.buffer.clear();
-            }
-            Ok(())
-        }
+    #[inline(always)]
+    fn write_block(&mut self, block: &mut [u8]) -> std::io::Result<()>
+    where
+        W: Write,
+    {
+        let block2 = GenericArray::from_mut_slice(block);
+        self.enc.encrypt_block_mut(block2);
+        self.output.write_all(block)?;
+        self.write_size += block.len() as u32;
+        Ok(())
     }
 }
 
-#[cfg(test)]
+#[cfg(feature = "compress")]
+impl<W: Write> Write for Aes256Sha256Encoder<W> {
+    fn write(&mut self, mut buf: &[u8]) -> std::io::Result<usize> {
+        if self.finished && !buf.is_empty() {
+            return Ok(0);
+        }
+        if buf.is_empty() {
+            self.finished = true;
+            self.flush()?;
+            return self.output.write(buf);
+        }
+        let len = buf.len();
+        if !self.buffer.is_empty() {
+            assert!(self.buffer.len() < 16);
+            if buf.len() + self.buffer.len() >= 16 {
+                let buffer = &self.buffer[..];
+                let end = 16 - buffer.len();
+
+                let mut block = [0u8; 16];
+                block[0..buffer.len()].copy_from_slice(buffer);
+                block[buffer.len()..16].copy_from_slice(&buf[..end]);
+                self.write_block(&mut block)?;
+                self.buffer.clear();
+                buf = &buf[end..];
+            } else {
+                self.buffer.extend_from_slice(buf);
+                return Ok(len);
+            }
+        }
+
+        for data in buf.chunks(16) {
+            if data.len() < 16 {
+                self.buffer.extend_from_slice(data);
+                break;
+            }
+            let mut block = [0u8; 16];
+            block.copy_from_slice(data);
+            self.write_block(&mut block)?;
+        }
+
+        Ok(len)
+    }
+
+    fn flush(&mut self) -> std::io::Result<()> {
+        if !self.buffer.is_empty() && self.finished {
+            assert!(self.buffer.len() < 16);
+            let mut block = [0u8; 16];
+            block[..self.buffer.len()].copy_from_slice(&self.buffer);
+            self.write_block(&mut block)?;
+            self.buffer.clear();
+        }
+        Ok(())
+    }
+}
+
+#[cfg(all(test, feature = "compress"))]
 mod tests {
+    use super::*;
     use std::io::Cursor;
 
-    use super::*;
-
-    #[allow(clippy::unused_io_amount)]
-    #[cfg(feature = "compress")]
     #[test]
     fn test_aes_codec() {
         let mut encoded = vec![];
         let writer = Cursor::new(&mut encoded);
-        let pwd: Password = "1234".into();
-        let options = AesEncoderOptions::new(pwd.clone());
+        let password: Password = "1234".into();
+        let options = AesEncoderOptions::new(password.clone());
         let mut enc = Aes256Sha256Encoder::new(writer, &options).unwrap();
-        let original = include_bytes!("./aes256sha256.rs");
-        enc.write_all(original).expect("encode data");
-        enc.write(&[]).unwrap();
+        let original = include_bytes!("aes.rs");
+        let _ = enc.write_all(original).expect("encode data");
+        let _ = enc.write(&[]).unwrap();
 
         let mut encoded_data = &encoded[..];
         let mut dec =
-            Aes256Sha256Decoder::new(&mut encoded_data, &options.properties(), pwd.as_slice())
-                .unwrap();
+            Aes256Sha256Decoder::new(&mut encoded_data, &options.properties(), &password).unwrap();
 
         let mut decoded = vec![];
-        std::io::copy(&mut dec, &mut decoded).unwrap();
+        let _ = std::io::copy(&mut dec, &mut decoded).unwrap();
         assert_eq!(&decoded[..original.len()], &original[..]);
     }
 }

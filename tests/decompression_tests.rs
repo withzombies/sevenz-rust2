@@ -1,11 +1,19 @@
+#[cfg(feature = "util")]
 use std::{
-    fs::{File, read, read_to_string},
+    fs::{read, read_to_string},
     path::PathBuf,
 };
 
-use sevenz_rust2::{Archive, BlockDecoder, Password, SevenZReader, decompress_file};
+use std::fs::File;
+
+#[cfg(feature = "util")]
+use sevenz_rust2::decompress_file;
+use sevenz_rust2::{Archive, ArchiveReader, BlockDecoder, Password};
+
+#[cfg(feature = "util")]
 use tempfile::tempdir;
 
+#[cfg(feature = "util")]
 #[test]
 fn decompress_single_empty_file_unencoded_header() {
     let mut source_file = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
@@ -20,6 +28,7 @@ fn decompress_single_empty_file_unencoded_header() {
     assert_eq!(read_to_string(file1_path).unwrap(), "");
 }
 
+#[cfg(feature = "util")]
 #[test]
 fn decompress_two_empty_files_unencoded_header() {
     let mut source_file = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
@@ -37,6 +46,7 @@ fn decompress_two_empty_files_unencoded_header() {
     assert_eq!(read_to_string(file2_path).unwrap(), "");
 }
 
+#[cfg(feature = "util")]
 #[test]
 fn decompress_lzma_single_file_unencoded_header() {
     let mut source_file = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
@@ -51,6 +61,7 @@ fn decompress_lzma_single_file_unencoded_header() {
     assert_eq!(read_to_string(file1_path).unwrap(), "this is a file\n");
 }
 
+#[cfg(feature = "util")]
 #[test]
 fn decompress_lzma2_bcj_x86_file() {
     let mut source_file = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
@@ -72,6 +83,7 @@ fn decompress_lzma2_bcj_x86_file() {
     );
 }
 
+#[cfg(feature = "util")]
 #[test]
 fn decompress_bcj_arm64_file() {
     let mut source_file = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
@@ -93,6 +105,7 @@ fn decompress_bcj_arm64_file() {
     );
 }
 
+#[cfg(feature = "util")]
 #[test]
 fn decompress_lzma_multiple_files_encoded_header() {
     let mut source_file = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
@@ -110,6 +123,7 @@ fn decompress_lzma_multiple_files_encoded_header() {
     assert_eq!(read_to_string(file2_path).unwrap(), "file two content\n");
 }
 
+#[cfg(feature = "util")]
 #[test]
 fn decompress_delta_lzma_single_file_unencoded_header() {
     let mut source_file = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
@@ -124,6 +138,7 @@ fn decompress_delta_lzma_single_file_unencoded_header() {
     assert_eq!(read_to_string(file1_path).unwrap(), "aaaabbbbcccc");
 }
 
+#[cfg(feature = "util")]
 #[test]
 fn decompress_copy_lzma2_single_file() {
     let mut source_file = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
@@ -138,7 +153,7 @@ fn decompress_copy_lzma2_single_file() {
     assert_eq!(read_to_string(file1_path).unwrap(), "simple copy encoding");
 }
 
-#[cfg(feature = "ppmd")]
+#[cfg(all(feature = "util", feature = "ppmd"))]
 #[test]
 fn decompress_ppmd_single_file() {
     let mut source_file = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
@@ -157,7 +172,7 @@ fn decompress_ppmd_single_file() {
     assert_eq!(decompressed_content, expected);
 }
 
-#[cfg(feature = "bzip2")]
+#[cfg(all(feature = "util", feature = "bzip2"))]
 #[test]
 fn decompress_bzip2_file() {
     let mut source_file = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
@@ -179,7 +194,7 @@ fn decompress_bzip2_file() {
 
 /// zstdmt (which 7zip ZS uses), does encapsulate brotli data in a special frames,
 /// for which we need to have custom logic to decode and encode to.
-#[cfg(feature = "brotli")]
+#[cfg(all(feature = "util", feature = "brotli"))]
 #[test]
 fn decompress_zstdmt_brotli_file() {
     let mut source_file = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
@@ -200,7 +215,7 @@ fn decompress_zstdmt_brotli_file() {
     );
 }
 
-#[cfg(feature = "lz4")]
+#[cfg(all(feature = "util", feature = "lz4"))]
 #[test]
 fn decompress_zstdmt_lz4_file() {
     let mut source_file = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
@@ -224,9 +239,10 @@ fn decompress_zstdmt_lz4_file() {
 #[test]
 fn test_bcj2() {
     let mut file = File::open("tests/resources/7za433_7zip_lzma2_bcj2.7z").unwrap();
-    let archive = Archive::read(&mut file, &[]).unwrap();
+    let archive = Archive::read(&mut file, &Password::empty()).unwrap();
     for i in 0..archive.folders.len() {
-        let fd = BlockDecoder::new(i, &archive, &[], &mut file);
+        let password = Password::empty();
+        let fd = BlockDecoder::new(i, &archive, &password, &mut file);
         println!("entry_count:{}", fd.entry_count());
         fd.for_each_entries(&mut |entry, reader| {
             println!("{}=>{:?}", entry.has_stream, entry.name());
@@ -245,7 +261,7 @@ fn test_entry_compressed_size() {
         if path.to_string_lossy().ends_with("7z") {
             println!("{path:?}");
             let mut file = File::open(path).unwrap();
-            let archive = Archive::read(&mut file, &[]).unwrap();
+            let archive = Archive::read(&mut file, &Password::empty()).unwrap();
             for i in 0..archive.folders.len() {
                 let fi = archive.stream_map.folder_first_file_index[i];
                 let file = &archive.files[fi];
@@ -267,9 +283,9 @@ fn test_entry_compressed_size() {
 fn test_get_file_by_path() {
     // non_solid.7z and solid.7z are expected to have the same content.
     let mut non_solid_reader =
-        SevenZReader::open("tests/resources/non_solid.7z", Password::empty()).unwrap();
+        ArchiveReader::open("tests/resources/non_solid.7z", Password::empty()).unwrap();
     let mut solid_reader =
-        SevenZReader::open("tests/resources/solid.7z", Password::empty()).unwrap();
+        ArchiveReader::open("tests/resources/solid.7z", Password::empty()).unwrap();
 
     let paths: Vec<String> = non_solid_reader
         .archive()

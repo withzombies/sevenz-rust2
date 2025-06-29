@@ -14,7 +14,8 @@ version = "0.15.3"
 crate-type = ["cdylib", "rlib"]
 
 [features]
-default = ["bzip2", "compress", "ppmd", "util"]
+default = ["aes256", "bzip2", "compress", "ppmd", "util"]
+default_wasm = ["aes256_wasm", "bzip2", "compress", "ppmd", "util"]
 aes256 = ["dep:aes", "dep:cbc", "dep:getrandom", "dep:sha2"]
 aes256_wasm = ["aes256", "getrandom/wasm_js"]
 brotli = ["dep:brotli"]
@@ -53,16 +54,28 @@ rand = { version = "0.9" }
 tempfile = "3"
 
 [[example]]
+name = "advance"
+required-features = ["default"]
+
+[[example]]
 name = "compress"
-required-features = ["aes256", "compress", "util"]
+required-features = ["default"]
 
 [[example]]
 name = "decompress"
-required-features = ["aes256", "compress", "util"]
+required-features = ["default"]
 
 [[example]]
-name = "advance"
-required-features = ["aes256", "compress", "util"]
+name = "decompress_progress"
+required-features = ["default"]
+
+[[example]]
+name = "folder_decompress"
+required-features = ["default"]
+
+[[example]]
+name = "mt_decompress"
+required-features = ["default"]
 
 [package.metadata.docs.rs]
 features = ["aes256", "brotli", "bzip2", "compress", "deflate", "lz4", "util", "ppmd", "zstd"]

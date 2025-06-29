@@ -1,4 +1,7 @@
+#[cfg(feature = "compress")]
 use sevenz_rust2::*;
+
+#[cfg(feature = "compress")]
 use tempfile::*;
 
 #[cfg(feature = "compress")]
@@ -18,7 +21,7 @@ fn compress_multi_files_solid() {
     }
     let dest = temp_dir.path().join("folder.7z");
 
-    let mut sz = SevenZWriter::create(&dest).unwrap();
+    let mut sz = ArchiveWriter::create(&dest).unwrap();
     sz.push_source_path(&folder, |_| true).unwrap();
     sz.finish().expect("compress ok");
 
@@ -53,7 +56,7 @@ fn compress_multi_files_mix_solid_and_non_solid() {
     }
     let dest = temp_dir.path().join("folder.7z");
 
-    let mut sz = SevenZWriter::create(&dest).unwrap();
+    let mut sz = ArchiveWriter::create(&dest).unwrap();
 
     // solid compression
     sz.push_source_path(&folder, |_| true).unwrap();
@@ -68,7 +71,7 @@ fn compress_multi_files_mix_solid_and_non_solid() {
 
         let src = folder.join(&name);
         sz.push_archive_entry(
-            SevenZArchiveEntry::from_path(&src, name),
+            ArchiveEntry::from_path(&src, name),
             Some(File::open(src).unwrap()),
         )
         .expect("ok");

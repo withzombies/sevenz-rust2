@@ -1,7 +1,8 @@
 use std::{collections::HashMap, env::temp_dir, time::Instant};
 
-use lzma::LZMA2Options;
+use lzma_rust2::LZMA2Options;
 use rand::Rng;
+use sevenz_rust2::encoder_options::AesEncoderOptions;
 use sevenz_rust2::*;
 
 fn main() {
@@ -29,12 +30,12 @@ fn main() {
 
     let time = Instant::now();
     // start compress
-    let mut sz = SevenZWriter::create(&dest).expect("create writer ok");
+    let mut sz = ArchiveWriter::create(&dest).expect("create writer ok");
     sz.set_encrypt_header(true);
     #[cfg(feature = "aes256")]
     {
         sz.set_content_methods(vec![
-            AesEncoderOptions::new("sevenz-rust".into()).into(),
+            AesEncoderOptions::new(Password::new("sevenz-rust")).into(),
             LZMA2Options::with_preset(9).into(),
         ]);
         // sz.set_encrypt_header(true);
@@ -56,7 +57,7 @@ fn main() {
     // decompress
     // let archive = Archive::open_with_password(&dest, &"sevenz-rust-".into()).unwrap();
     // println!("archive:{:?}", archive);
-    let mut sz = SevenZReader::open(&dest, "sevenz-rust".into()).expect("create reader ok");
+    let mut sz = ArchiveReader::open(&dest, "sevenz-rust".into()).expect("create reader ok");
     assert_eq!(contents.len(), sz.archive().files.len());
     assert_eq!(1, sz.archive().folders.len());
     sz.for_each_entries(|entry, reader| {

@@ -1,6 +1,9 @@
-mod counting;
+mod counting_writer;
+#[cfg(all(feature = "util", not(target_arch = "wasm32")))]
+mod lazy_file_reader;
 mod pack_info;
 mod seq_reader;
+mod source_reader;
 mod unpack_info;
 
 use std::{
@@ -13,12 +16,16 @@ use std::{
 use std::{fs::File, path::Path};
 
 use bit_set::BitSet;
-use byteorder::*;
+use byteorder::{LittleEndian, WriteBytesExt};
+pub(crate) use counting_writer::CountingWriter;
 use crc32fast::Hasher;
 
-pub use self::{counting::CountingWriter, seq_reader::*};
+#[cfg(all(feature = "util", not(target_arch = "wasm32")))]
+pub(crate) use self::lazy_file_reader::LazyFileReader;
+pub(crate) use self::seq_reader::SeqReader;
+pub use self::source_reader::SourceReader;
 use self::{pack_info::PackInfo, unpack_info::UnpackInfo};
-use crate::{Error, SevenZArchiveEntry, archive::*, encoders};
+use crate::{ArchiveEntry, Error, archive::*, encoder};
 
 macro_rules! write_times {
     //write_i64
@@ -66,19 +73,19 @@ macro_rules! write_times {
 
 type Result<T> = std::result::Result<T, Error>;
 
-/// Writes a 7z file.
+/// Writes a 7z archive file.
 #[cfg_attr(docsrs, doc(cfg(feature = "compress")))]
-pub struct SevenZWriter<W: Write> {
+pub struct ArchiveWriter<W: Write> {
     output: W,
-    files: Vec<SevenZArchiveEntry>,
-    content_methods: Arc<Vec<SevenZMethodConfiguration>>,
+    files: Vec<ArchiveEntry>,
+    content_methods: Arc<Vec<EncoderConfiguration>>,
     pack_info: PackInfo,
     unpack_info: UnpackInfo,
     encrypt_header: bool,
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-impl SevenZWriter<File> {
+impl ArchiveWriter<File> {
     /// Creates a file to write a 7z archive to.
     pub fn create(path: impl AsRef<Path>) -> Result<Self> {
         let file = File::create(path.as_ref())
@@ -87,7 +94,7 @@ impl SevenZWriter<File> {
     }
 }
 
-impl<W: Write + Seek> SevenZWriter<W> {
+impl<W: Write + Seek> ArchiveWriter<W> {
     /// Prepares writer to write a 7z archive to.
     pub fn new(mut writer: W) -> Result<Self> {
         writer
@@ -97,7 +104,7 @@ impl<W: Write + Seek> SevenZWriter<W> {
         Ok(Self {
             output: writer,
             files: Default::default(),
-            content_methods: Arc::new(vec![SevenZMethodConfiguration::new(SevenZMethod::LZMA2)]),
+            content_methods: Arc::new(vec![EncoderConfiguration::new(EncoderMethod::LZMA2)]),
             pack_info: Default::default(),
             unpack_info: Default::default(),
             encrypt_header: true,
@@ -105,10 +112,7 @@ impl<W: Write + Seek> SevenZWriter<W> {
     }
 
     /// Sets the default compression methods to use for entry data. Default is LZMA2.
-    pub fn set_content_methods(
-        &mut self,
-        content_methods: Vec<SevenZMethodConfiguration>,
-    ) -> &mut Self {
+    pub fn set_content_methods(&mut self, content_methods: Vec<EncoderConfiguration>) -> &mut Self {
         if content_methods.is_empty() {
             return self;
         }
@@ -128,12 +132,12 @@ impl<W: Write + Seek> SevenZWriter<W> {
     /// use std::{fs::File, path::Path};
     ///
     /// use sevenz_rust2::*;
-    /// let mut sz = SevenZWriter::create("path/to/dest.7z").expect("create writer ok");
+    /// let mut sz = ArchiveWriter::create("path/to/dest.7z").expect("create writer ok");
     /// let src = Path::new("path/to/source.txt");
     /// let name = "source.txt".to_string();
     /// let entry = sz
     ///     .push_archive_entry(
-    ///         SevenZArchiveEntry::from_path(&src, name),
+    ///         ArchiveEntry::from_path(&src, name),
     ///         Some(File::open(src).unwrap()),
     ///     )
     ///     .expect("ok");
@@ -142,9 +146,9 @@ impl<W: Write + Seek> SevenZWriter<W> {
     /// ```
     pub fn push_archive_entry<R: Read>(
         &mut self,
-        mut entry: SevenZArchiveEntry,
+        mut entry: ArchiveEntry,
         reader: Option<R>,
-    ) -> Result<&SevenZArchiveEntry> {
+    ) -> Result<&ArchiveEntry> {
         if !entry.is_directory {
             if let Some(mut r) = reader {
                 let mut compressed_len = 0;
@@ -222,10 +226,11 @@ impl<W: Write + Seek> SevenZWriter<W> {
     /// * If `entries`'s length not equals to `reader.reader_len()`
     pub fn push_archive_entries<R: Read>(
         &mut self,
-        mut entries: Vec<SevenZArchiveEntry>,
-        reader: SeqReader<SourceReader<R>>,
+        entries: Vec<ArchiveEntry>,
+        reader: Vec<SourceReader<R>>,
     ) -> Result<&mut Self> {
-        let mut r = reader;
+        let mut entries = entries;
+        let mut r = SeqReader::new(reader);
         assert_eq!(r.reader_len(), entries.len());
         let mut compressed_len = 0;
         let mut compressed = CompressWrapWriter::new(&mut self.output, &mut compressed_len);
@@ -238,7 +243,7 @@ impl<W: Write + Seek> SevenZWriter<W> {
             let mut w = CompressWrapWriter::new(&mut w, &mut write_len);
             let mut buf = [0u8; 4096];
 
-            fn entries_names(entries: &[SevenZArchiveEntry]) -> String {
+            fn entries_names(entries: &[ArchiveEntry]) -> String {
                 let mut names = String::with_capacity(512);
                 for ele in entries.iter() {
                     names.push_str(&ele.name);
@@ -319,7 +324,7 @@ impl<W: Write + Seek> SevenZWriter<W> {
     }
 
     fn create_writer<'a, O: Write + 'a>(
-        methods: &[SevenZMethodConfiguration],
+        methods: &[EncoderConfiguration],
         out: O,
         more_sized: &mut Vec<Rc<Cell<usize>>>,
     ) -> Result<Box<dyn Write + 'a>> {
@@ -329,10 +334,10 @@ impl<W: Write + Seek> SevenZWriter<W> {
             if !first {
                 let counting = CountingWriter::new(encoder);
                 more_sized.push(counting.counting());
-                encoder = Box::new(encoders::add_encoder(counting, mc)?);
+                encoder = Box::new(encoder::add_encoder(counting, mc)?);
             } else {
                 let counting = CountingWriter::new(encoder);
-                encoder = Box::new(encoders::add_encoder(counting, mc)?);
+                encoder = Box::new(encoder::add_encoder(counting, mc)?);
             }
             first = false;
         }
@@ -396,14 +401,14 @@ impl<W: Write + Seek> SevenZWriter<W> {
 
         if self.encrypt_header {
             for conf in self.content_methods.iter() {
-                if conf.method.id() == SevenZMethod::AES256SHA256.id() {
+                if conf.method.id() == EncoderMethod::AES256SHA256.id() {
                     methods.push(conf.clone());
                     break;
                 }
             }
         }
 
-        methods.push(SevenZMethodConfiguration::new(SevenZMethod::LZMA));
+        methods.push(EncoderConfiguration::new(EncoderMethod::LZMA));
 
         let methods = Arc::new(methods);
 

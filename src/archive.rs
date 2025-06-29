@@ -2,7 +2,10 @@
 use bit_set::BitSet;
 use nt_time::FileTime;
 
-use crate::{folder::*, method_options::MethodOptions};
+#[cfg(feature = "compress")]
+use crate::encoder_options::EncoderOptions;
+
+use crate::folder::*;
 
 pub(crate) const SIGNATURE_HEADER_SIZE: u64 = 32;
 pub(crate) const SEVEN_Z_SIGNATURE: &[u8] = &[b'7', b'z', 0xBC, 0xAF, 0x27, 0x1C];
@@ -43,7 +46,7 @@ pub struct Archive {
     pub pack_crcs: Vec<u64>,
     pub folders: Vec<Folder>,
     pub sub_streams_info: Option<SubStreamsInfo>,
-    pub files: Vec<SevenZArchiveEntry>,
+    pub files: Vec<ArchiveEntry>,
     pub stream_map: StreamMap,
     pub is_solid: bool,
 }
@@ -56,7 +59,7 @@ pub struct SubStreamsInfo {
 }
 
 #[derive(Debug, Default, Clone)]
-pub struct SevenZArchiveEntry {
+pub struct ArchiveEntry {
     pub name: String,
     pub has_stream: bool,
     pub is_directory: bool,
@@ -76,7 +79,7 @@ pub struct SevenZArchiveEntry {
     pub compressed_size: u64,
 }
 
-impl SevenZArchiveEntry {
+impl ArchiveEntry {
     pub fn new() -> Self {
         Self::default()
     }
@@ -111,7 +114,7 @@ impl SevenZArchiveEntry {
             }
             String::from_utf8(name_bytes).unwrap()
         };
-        let mut entry = SevenZArchiveEntry {
+        let mut entry = ArchiveEntry {
             name: entry_name,
             has_stream: path.is_file(),
             is_directory: path.is_dir(),
@@ -178,19 +181,23 @@ impl SevenZArchiveEntry {
     }
 }
 
+#[cfg_attr(docsrs, doc(cfg(feature = "compress")))]
+#[cfg(feature = "compress")]
 #[derive(Debug, Default)]
-pub struct SevenZMethodConfiguration {
-    pub method: SevenZMethod,
-    pub options: Option<MethodOptions>,
+pub struct EncoderConfiguration {
+    pub method: EncoderMethod,
+    pub options: Option<EncoderOptions>,
 }
 
-impl From<SevenZMethod> for SevenZMethodConfiguration {
-    fn from(value: SevenZMethod) -> Self {
+#[cfg(feature = "compress")]
+impl From<EncoderMethod> for EncoderConfiguration {
+    fn from(value: EncoderMethod) -> Self {
         Self::new(value)
     }
 }
 
-impl Clone for SevenZMethodConfiguration {
+#[cfg(feature = "compress")]
+impl Clone for EncoderConfiguration {
     fn clone(&self) -> Self {
         Self {
             method: self.method,
@@ -199,49 +206,51 @@ impl Clone for SevenZMethodConfiguration {
     }
 }
 
-impl SevenZMethodConfiguration {
-    pub fn new(method: SevenZMethod) -> Self {
+#[cfg(feature = "compress")]
+impl EncoderConfiguration {
+    pub fn new(method: EncoderMethod) -> Self {
         Self {
             method,
             options: None,
         }
     }
 
-    pub fn with_options(mut self, options: MethodOptions) -> Self {
+    pub fn with_options(mut self, options: EncoderOptions) -> Self {
         self.options = Some(options);
         self
     }
 }
 
+/// Encoder method that can be chained (filter, compression and encryption).
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Default, Hash)]
-pub struct SevenZMethod(&'static str, &'static [u8]);
+pub struct EncoderMethod(&'static str, &'static [u8]);
 
-impl SevenZMethod {
-    pub const ID_COPY: &'static [u8] = &[0x00];
-    pub const ID_DELTA: &'static [u8] = &[0x03];
-    pub const ID_BCJ: &'static [u8] = &[0x04];
+impl EncoderMethod {
+    pub(crate) const ID_COPY: &'static [u8] = &[0x00];
+    pub(crate) const ID_DELTA: &'static [u8] = &[0x03];
+    pub(crate) const ID_BCJ: &'static [u8] = &[0x04];
 
-    pub const ID_LZMA: &'static [u8] = &[0x03, 0x01, 0x01];
-    pub const ID_BCJ_X86: &'static [u8] = &[0x03, 0x03, 0x01, 0x03];
-    pub const ID_BCJ2: &'static [u8] = &[0x03, 0x03, 0x01, 0x1B];
-    pub const ID_BCJ_PPC: &'static [u8] = &[0x03, 0x03, 0x02, 0x05];
-    pub const ID_BCJ_IA64: &'static [u8] = &[0x03, 0x03, 0x04, 0x01];
-    pub const ID_BCJ_ARM: &'static [u8] = &[0x03, 0x03, 0x05, 0x01];
-    pub const ID_BCJ_ARM64: &'static [u8] = &[0xA];
-    pub const ID_BCJ_ARM_THUMB: &'static [u8] = &[0x03, 0x03, 0x07, 0x01];
-    pub const ID_BCJ_SPARC: &'static [u8] = &[0x03, 0x03, 0x08, 0x05];
-    pub const ID_PPMD: &'static [u8] = &[0x03, 0x04, 0x01];
+    pub(crate) const ID_LZMA: &'static [u8] = &[0x03, 0x01, 0x01];
+    pub(crate) const ID_BCJ_X86: &'static [u8] = &[0x03, 0x03, 0x01, 0x03];
+    pub(crate) const ID_BCJ2: &'static [u8] = &[0x03, 0x03, 0x01, 0x1B];
+    pub(crate) const ID_BCJ_PPC: &'static [u8] = &[0x03, 0x03, 0x02, 0x05];
+    pub(crate) const ID_BCJ_IA64: &'static [u8] = &[0x03, 0x03, 0x04, 0x01];
+    pub(crate) const ID_BCJ_ARM: &'static [u8] = &[0x03, 0x03, 0x05, 0x01];
+    pub(crate) const ID_BCJ_ARM64: &'static [u8] = &[0xA];
+    pub(crate) const ID_BCJ_ARM_THUMB: &'static [u8] = &[0x03, 0x03, 0x07, 0x01];
+    pub(crate) const ID_BCJ_SPARC: &'static [u8] = &[0x03, 0x03, 0x08, 0x05];
+    pub(crate) const ID_PPMD: &'static [u8] = &[0x03, 0x04, 0x01];
 
-    pub const ID_LZMA2: &'static [u8] = &[0x21];
-    pub const ID_BZIP2: &'static [u8] = &[0x04, 0x02, 0x02];
-    pub const ID_ZSTD: &'static [u8] = &[0x04, 0xF7, 0x11, 0x01];
-    pub const ID_BROTLI: &'static [u8] = &[0x04, 0xF7, 0x11, 0x02];
-    pub const ID_LZ4: &'static [u8] = &[0x04, 0xF7, 0x11, 0x04];
-    pub const ID_LZS: &'static [u8] = &[0x04, 0xF7, 0x11, 0x05];
-    pub const ID_LIZARD: &'static [u8] = &[0x04, 0xF7, 0x11, 0x06];
-    pub const ID_DEFLATE: &'static [u8] = &[0x04, 0x01, 0x08];
-    pub const ID_DEFLATE64: &'static [u8] = &[0x04, 0x01, 0x09];
-    pub const ID_AES256SHA256: &'static [u8] = &[0x06, 0xF1, 0x07, 0x01];
+    pub(crate) const ID_LZMA2: &'static [u8] = &[0x21];
+    pub(crate) const ID_BZIP2: &'static [u8] = &[0x04, 0x02, 0x02];
+    pub(crate) const ID_ZSTD: &'static [u8] = &[0x04, 0xF7, 0x11, 0x01];
+    pub(crate) const ID_BROTLI: &'static [u8] = &[0x04, 0xF7, 0x11, 0x02];
+    pub(crate) const ID_LZ4: &'static [u8] = &[0x04, 0xF7, 0x11, 0x04];
+    pub(crate) const ID_LZS: &'static [u8] = &[0x04, 0xF7, 0x11, 0x05];
+    pub(crate) const ID_LIZARD: &'static [u8] = &[0x04, 0xF7, 0x11, 0x06];
+    pub(crate) const ID_DEFLATE: &'static [u8] = &[0x04, 0x01, 0x08];
+    pub(crate) const ID_DEFLATE64: &'static [u8] = &[0x04, 0x01, 0x09];
+    pub(crate) const ID_AES256SHA256: &'static [u8] = &[0x06, 0xF1, 0x07, 0x01];
 
     pub const COPY: Self = Self("COPY", Self::ID_COPY);
     pub const LZMA: Self = Self("LZMA", Self::ID_LZMA);
@@ -267,7 +276,7 @@ impl SevenZMethod {
     pub const DELTA_FILTER: Self = Self("DELTA", Self::ID_DELTA);
     pub const BCJ2_FILTER: Self = Self("BCJ2", Self::ID_BCJ2);
 
-    const METHODS: &'static [&'static SevenZMethod] = &[
+    const ENCODING_METHODS: &'static [&'static EncoderMethod] = &[
         &Self::COPY,
         &Self::LZMA,
         &Self::LZMA2,
@@ -304,7 +313,7 @@ impl SevenZMethod {
 
     #[inline]
     pub fn by_id(id: &[u8]) -> Option<Self> {
-        Self::METHODS
+        Self::ENCODING_METHODS
             .iter()
             .find(|item| item.id() == id)
             .cloned()

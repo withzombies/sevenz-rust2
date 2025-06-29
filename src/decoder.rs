@@ -5,25 +5,21 @@ use byteorder::{LittleEndian, ReadBytesExt};
 use bzip2::read::BzDecoder;
 #[cfg(feature = "deflate")]
 use flate2::bufread::DeflateDecoder;
+use lzma_rust2::{LZMA2Reader, LZMAReader, lzma2_get_memory_usage};
 #[cfg(feature = "ppmd")]
 use ppmd_rust::{
     PPMD7_MAX_MEM_SIZE, PPMD7_MAX_ORDER, PPMD7_MIN_MEM_SIZE, PPMD7_MIN_ORDER, Ppmd7Decoder,
 };
 
-#[cfg(feature = "aes256")]
-use crate::aes256sha256::Aes256Sha256Decoder;
 #[cfg(feature = "brotli")]
-use crate::brotli::BrotliDecoder;
+use crate::codec::brotli::BrotliDecoder;
 #[cfg(feature = "lz4")]
-use crate::lz4::Lz4Decoder;
-use crate::{
-    archive::SevenZMethod,
-    bcj::SimpleReader,
-    delta::DeltaReader,
-    error::Error,
-    folder::Coder,
-    lzma::{LZMA2Reader, LZMAReader, lzma2_get_memory_usage},
-};
+use crate::codec::lz4::Lz4Decoder;
+#[cfg(feature = "aes256")]
+use crate::encryption::Aes256Sha256Decoder;
+use crate::filter::bcj::SimpleReader;
+use crate::filter::delta::DeltaReader;
+use crate::{Password, archive::EncoderMethod, error::Error, folder::Coder};
 
 #[allow(clippy::upper_case_acronyms)]
 pub enum Decoder<R: Read> {
@@ -78,10 +74,10 @@ pub fn add_decoder<I: Read>(
     input: I,
     uncompressed_len: usize,
     coder: &Coder,
-    #[allow(unused)] password: &[u8],
+    #[allow(unused)] password: &Password,
     max_mem_limit_kb: usize,
 ) -> Result<Decoder<I>, Error> {
-    let method = SevenZMethod::by_id(coder.decompression_method_id());
+    let method = EncoderMethod::by_id(coder.decompression_method_id());
     let method = if let Some(m) = method {
         m
     } else {
@@ -91,8 +87,8 @@ pub fn add_decoder<I: Read>(
         )));
     };
     match method.id() {
-        SevenZMethod::ID_COPY => Ok(Decoder::COPY(input)),
-        SevenZMethod::ID_LZMA => {
+        EncoderMethod::ID_COPY => Ok(Decoder::COPY(input)),
+        EncoderMethod::ID_LZMA => {
             let dict_size = get_lzma_dic_size(coder)?;
             if coder.properties.is_empty() {
                 return Err(Error::Other("LZMA properties too short".into()));
@@ -103,7 +99,7 @@ pub fn add_decoder<I: Read>(
                     .map_err(|e| Error::bad_password(e, !password.is_empty()))?;
             Ok(Decoder::LZMA(lz))
         }
-        SevenZMethod::ID_LZMA2 => {
+        EncoderMethod::ID_LZMA2 => {
             let dic_size = get_lzma2_dic_size(coder)?;
             let mem_size = lzma2_get_memory_usage(dic_size) as usize;
             if mem_size > max_mem_limit_kb {
@@ -116,63 +112,63 @@ pub fn add_decoder<I: Read>(
             Ok(Decoder::LZMA2(lz))
         }
         #[cfg(feature = "ppmd")]
-        SevenZMethod::ID_PPMD => {
+        EncoderMethod::ID_PPMD => {
             let (order, memory_size) = get_ppmd_order_memory_size(coder, max_mem_limit_kb)?;
             let ppmd = Ppmd7Decoder::new(input, order, memory_size)
                 .map_err(|err| Error::other(err.to_string()))?;
             Ok(Decoder::PPMD(Box::new(ppmd)))
         }
         #[cfg(feature = "brotli")]
-        SevenZMethod::ID_BROTLI => {
+        EncoderMethod::ID_BROTLI => {
             let de = BrotliDecoder::new(input, 4096)?;
             Ok(Decoder::Brotli(de))
         }
         #[cfg(feature = "bzip2")]
-        SevenZMethod::ID_BZIP2 => {
+        EncoderMethod::ID_BZIP2 => {
             let de = BzDecoder::new(input);
             Ok(Decoder::BZip2(de))
         }
         #[cfg(feature = "deflate")]
-        SevenZMethod::ID_DEFLATE => {
+        EncoderMethod::ID_DEFLATE => {
             let buf_read = std::io::BufReader::new(input);
             let de = DeflateDecoder::new(buf_read);
             Ok(Decoder::Deflate(de))
         }
         #[cfg(feature = "lz4")]
-        SevenZMethod::ID_LZ4 => {
+        EncoderMethod::ID_LZ4 => {
             let de = Lz4Decoder::new(input)?;
             Ok(Decoder::LZ4(de))
         }
         #[cfg(feature = "zstd")]
-        SevenZMethod::ID_ZSTD => {
+        EncoderMethod::ID_ZSTD => {
             let zs = zstd::Decoder::new(input).map_err(Error::io)?;
             Ok(Decoder::ZSTD(zs))
         }
-        SevenZMethod::ID_BCJ_X86 => {
+        EncoderMethod::ID_BCJ_X86 => {
             let de = SimpleReader::new_x86(input);
             Ok(Decoder::BCJ(de))
         }
-        SevenZMethod::ID_BCJ_ARM => {
+        EncoderMethod::ID_BCJ_ARM => {
             let de = SimpleReader::new_arm(input);
             Ok(Decoder::BCJ(de))
         }
-        SevenZMethod::ID_BCJ_ARM64 => {
+        EncoderMethod::ID_BCJ_ARM64 => {
             let de = SimpleReader::new_arm64(input);
             Ok(Decoder::BCJ(de))
         }
-        SevenZMethod::ID_BCJ_ARM_THUMB => {
+        EncoderMethod::ID_BCJ_ARM_THUMB => {
             let de = SimpleReader::new_arm_thumb(input);
             Ok(Decoder::BCJ(de))
         }
-        SevenZMethod::ID_BCJ_PPC => {
+        EncoderMethod::ID_BCJ_PPC => {
             let de = SimpleReader::new_ppc(input);
             Ok(Decoder::BCJ(de))
         }
-        SevenZMethod::ID_BCJ_SPARC => {
+        EncoderMethod::ID_BCJ_SPARC => {
             let de = SimpleReader::new_sparc(input);
             Ok(Decoder::BCJ(de))
         }
-        SevenZMethod::ID_DELTA => {
+        EncoderMethod::ID_DELTA => {
             let d = if coder.properties.is_empty() {
                 1
             } else {
@@ -182,7 +178,7 @@ pub fn add_decoder<I: Read>(
             Ok(Decoder::Delta(de))
         }
         #[cfg(feature = "aes256")]
-        SevenZMethod::ID_AES256SHA256 => {
+        EncoderMethod::ID_AES256SHA256 => {
             if password.is_empty() {
                 return Err(Error::PasswordRequired);
             }

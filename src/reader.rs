@@ -9,7 +9,8 @@ use std::{
 use bit_set::BitSet;
 use crc32fast::Hasher;
 
-use crate::{archive::*, decoders::add_decoder, error::Error, folder::*, password::Password};
+use crate::Password;
+use crate::{archive::*, decoder::add_decoder, error::Error, folder::*};
 
 const MAX_MEM_LIMIT_KB: usize = usize::MAX / 1024;
 
@@ -148,14 +149,14 @@ impl Archive {
         Self::open_with_password(path, &Password::empty())
     }
 
-    /// Open an encrypted 7z file under specified `path` with  `password`.
+    /// Open an encrypted 7z file under specified `path` with `password`.
     #[inline]
     pub fn open_with_password(
         path: impl AsRef<std::path::Path>,
         password: &Password,
     ) -> Result<Archive, Error> {
         let mut file = File::open(path)?;
-        Self::read(&mut file, password.as_ref())
+        Self::read(&mut file, password)
     }
 
     /// Read 7z file archive info use the specified `reader`.
@@ -177,13 +178,13 @@ impl Archive {
     /// let mut reader = File::open("example.7z").unwrap();
     ///
     /// let password = Password::from("the password");
-    /// let archive = Archive::read(&mut reader, password.as_ref()).unwrap();
+    /// let archive = Archive::read(&mut reader, &password).unwrap();
     ///
     /// for entry in &archive.files {
     ///     println!("{}", entry.name());
     /// }
     /// ```
-    pub fn read<R: Read + Seek>(reader: &mut R, password: &[u8]) -> Result<Archive, Error> {
+    pub fn read<R: Read + Seek>(reader: &mut R, password: &Password) -> Result<Archive, Error> {
         let reader_len = reader.seek(SeekFrom::End(0))?;
         reader.seek(SeekFrom::Start(0))?;
 
@@ -286,7 +287,7 @@ impl Archive {
     fn try_to_locale_end_header<R: Read + Seek>(
         reader: &mut R,
         reader_len: u64,
-        password: &[u8],
+        password: &Password,
     ) -> Result<Self, Error> {
         let search_limit = 1024 * 1024;
         let prev_data_size = reader.stream_position().map_err(Error::io)? + 20;
@@ -323,7 +324,7 @@ impl Archive {
     fn init_archive<R: Read + Seek>(
         reader: &mut R,
         start_header: StartHeader,
-        password: &[u8],
+        password: &Password,
         verify_crc: bool,
     ) -> Result<Self, Error> {
         if start_header.next_header_size > usize::MAX as u64 {
@@ -384,7 +385,7 @@ impl Archive {
         header: &mut R,
         reader: &'r mut RI,
         archive: &mut Archive,
-        password: &[u8],
+        password: &Password,
     ) -> Result<(Box<dyn Read + 'r>, usize), Error> {
         Self::read_streams_info(header, archive)?;
         let folder = archive
@@ -459,7 +460,7 @@ impl Archive {
 
     fn read_files_info<R: Read + Seek>(header: &mut R, archive: &mut Archive) -> Result<(), Error> {
         let num_files = read_usize(header, "num files")?;
-        let mut files: Vec<SevenZArchiveEntry> = vec![Default::default(); num_files];
+        let mut files: Vec<ArchiveEntry> = vec![Default::default(); num_files];
 
         let mut is_empty_stream: Option<BitSet> = None;
         let mut is_empty_file: Option<BitSet> = None;
@@ -1104,17 +1105,17 @@ struct IndexEntry {
     file_index: usize,
 }
 
-/// Reads a 7z file.
-pub struct SevenZReader<R: Read + Seek> {
+/// Reads a 7z archive file.
+pub struct ArchiveReader<R: Read + Seek> {
     source: R,
     archive: Archive,
-    password: Vec<u8>,
+    password: Password,
     index: HashMap<String, IndexEntry>,
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-impl SevenZReader<File> {
-    /// Opens a 7z archive file at the given `path` and creates a [`SevenZReader`] to read it.
+impl ArchiveReader<File> {
+    /// Opens a 7z archive file at the given `path` and creates a [`ArchiveReader`] to read it.
     #[inline]
     pub fn open(path: impl AsRef<std::path::Path>, password: Password) -> Result<Self, Error> {
         let file = File::open(path.as_ref())
@@ -1123,11 +1124,10 @@ impl SevenZReader<File> {
     }
 }
 
-impl<R: Read + Seek> SevenZReader<R> {
-    /// Creates a [`SevenZReader`] to read a 7z archive file from the given `source` reader.
+impl<R: Read + Seek> ArchiveReader<R> {
+    /// Creates a [`ArchiveReader`] to read a 7z archive file from the given `source` reader.
     #[inline]
     pub fn new(mut source: R, password: Password) -> Result<Self, Error> {
-        let password = password.to_vec();
         let archive = Archive::read(&mut source, &password)?;
 
         let mut reader = Self {
@@ -1147,7 +1147,7 @@ impl<R: Read + Seek> SevenZReader<R> {
         let mut reader = Self {
             source,
             archive,
-            password: password.to_vec(),
+            password,
             index: HashMap::default(),
         };
 
@@ -1179,7 +1179,7 @@ impl<R: Read + Seek> SevenZReader<R> {
         source: &'r mut R,
         archive: &Archive,
         folder_index: usize,
-        password: &[u8],
+        password: &Password,
     ) -> Result<(Box<dyn Read + 'r>, usize), Error> {
         let folder = &archive.folders[folder_index];
         if folder.total_input_streams > folder.total_output_streams {
@@ -1228,7 +1228,7 @@ impl<R: Read + Seek> SevenZReader<R> {
         source: &'r mut R,
         archive: &Archive,
         folder_index: usize,
-        password: &[u8],
+        password: &Password,
     ) -> Result<(Box<dyn Read + 'r>, usize), Error> {
         const MAX_CODER_COUNT: usize = 32;
         let folder = &archive.folders[folder_index];
@@ -1280,7 +1280,7 @@ impl<R: Read + Seek> SevenZReader<R> {
         };
 
         let id = folder.coders[main_coder_index].decompression_method_id();
-        if id != SevenZMethod::ID_BCJ2 {
+        if id != EncoderMethod::ID_BCJ2 {
             return Err(Error::unsupported(format!("Unsupported method: {id:?}")));
         }
 
@@ -1296,7 +1296,7 @@ impl<R: Read + Seek> SevenZReader<R> {
                 i,
             )?);
         }
-        let mut decoder: Box<dyn Read> = Box::new(crate::bcj2::BCJ2Reader::new(
+        let mut decoder: Box<dyn Read> = Box::new(crate::filter::bcj2::BCJ2Reader::new(
             inputs,
             folder.get_unpack_size(),
         ));
@@ -1317,7 +1317,7 @@ impl<R: Read + Seek> SevenZReader<R> {
         folder: &Folder,
         sources: &[SeekableBoundedReader<ReaderPointer<'r, R>>],
         coder_to_stream_map: &[usize],
-        password: &[u8],
+        password: &Password,
 
         in_stream_index: usize,
     ) -> Result<Box<dyn Read + 'r>, Error>
@@ -1348,7 +1348,7 @@ impl<R: Read + Seek> SevenZReader<R> {
         folder: &Folder,
         sources: &[SeekableBoundedReader<ReaderPointer<'r, R>>],
         coder_to_stream_map: &[usize],
-        password: &[u8],
+        password: &Password,
         in_stream_index: usize,
     ) -> Result<Box<dyn Read + 'r>, Error>
     where
@@ -1377,7 +1377,7 @@ impl<R: Read + Seek> SevenZReader<R> {
     /// Attention about solid archive:
     /// When decoding a solid archive, the data to be decompressed depends on the data in front of it,
     /// you cannot simply skip the previous data and only decompress the data in the back.
-    pub fn for_each_entries<F: FnMut(&SevenZArchiveEntry, &mut dyn Read) -> Result<bool, Error>>(
+    pub fn for_each_entries<F: FnMut(&ArchiveEntry, &mut dyn Read) -> Result<bool, Error>>(
         &mut self,
         mut each: F,
     ) -> Result<(), Error> {
@@ -1485,7 +1485,7 @@ impl<R: Read + Seek> SevenZReader<R> {
     pub fn file_compression_methods(
         &self,
         file_name: &str,
-        methods: &mut Vec<SevenZMethod>,
+        methods: &mut Vec<EncoderMethod>,
     ) -> Result<(), Error> {
         let index_entry = self.index.get(file_name).ok_or(Error::FileNotFound)?;
         let file = &self.archive.files[index_entry.file_index];
@@ -1507,7 +1507,7 @@ impl<R: Read + Seek> SevenZReader<R> {
         folder
             .coders
             .iter()
-            .filter_map(|coder| SevenZMethod::by_id(coder.decompression_method_id()))
+            .filter_map(|coder| EncoderMethod::by_id(coder.decompression_method_id()))
             .for_each(|method| {
                 methods.push(method);
             });
@@ -1519,7 +1519,7 @@ impl<R: Read + Seek> SevenZReader<R> {
 pub struct BlockDecoder<'a, R: Read + Seek> {
     folder_index: usize,
     archive: &'a Archive,
-    password: &'a [u8],
+    password: &'a Password,
     source: &'a mut R,
 }
 
@@ -1527,7 +1527,7 @@ impl<'a, R: Read + Seek> BlockDecoder<'a, R> {
     pub fn new(
         folder_index: usize,
         archive: &'a Archive,
-        password: &'a [u8],
+        password: &'a Password,
         source: &'a mut R,
     ) -> Self {
         Self {
@@ -1538,7 +1538,7 @@ impl<'a, R: Read + Seek> BlockDecoder<'a, R> {
         }
     }
 
-    pub fn entries(&self) -> &[SevenZArchiveEntry] {
+    pub fn entries(&self) -> &[ArchiveEntry] {
         let start = self.archive.stream_map.folder_first_file_index[self.folder_index];
         let file_count = self.archive.folders[self.folder_index].num_unpack_sub_streams;
         &self.archive.files[start..(file_count + start)]
@@ -1554,7 +1554,7 @@ impl<'a, R: Read + Seek> BlockDecoder<'a, R> {
     /// it, you cannot simply skip the previous data and only decompress the data in the back.
     ///
     /// Non-solid archives use one block per file and allow more effective decoding of single files.
-    pub fn for_each_entries<F: FnMut(&SevenZArchiveEntry, &mut dyn Read) -> Result<bool, Error>>(
+    pub fn for_each_entries<F: FnMut(&ArchiveEntry, &mut dyn Read) -> Result<bool, Error>>(
         self,
         each: &mut F,
     ) -> Result<bool, Error> {
@@ -1565,7 +1565,7 @@ impl<'a, R: Read + Seek> BlockDecoder<'a, R> {
             source,
         } = self;
         let (mut folder_reader, _size) =
-            SevenZReader::build_decode_stack(source, archive, folder_index, password)?;
+            ArchiveReader::build_decode_stack(source, archive, folder_index, password)?;
         let start = archive.stream_map.folder_first_file_index[folder_index];
         let file_count = archive.folders[folder_index].num_unpack_sub_streams;
 

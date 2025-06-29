@@ -1,13 +1,20 @@
+#[cfg(all(feature = "compress", feature = "util"))]
 use std::{
     fs::File,
     hash::{Hash, Hasher},
     io::{Cursor, Read},
 };
 
+#[cfg(all(feature = "compress", feature = "util"))]
 use sevenz_rust2::*;
+
+#[cfg(all(feature = "compress", feature = "util"))]
 use tempfile::*;
 
-#[cfg(feature = "compress")]
+#[cfg(all(feature = "compress", feature = "util"))]
+use sevenz_rust2::encoder_options::*;
+
+#[cfg(all(feature = "compress", feature = "util"))]
 #[test]
 fn compress_empty_file() {
     let temp_dir = tempdir().unwrap();
@@ -25,7 +32,7 @@ fn compress_empty_file() {
     assert_eq!(std::fs::read_to_string(&decompress_file).unwrap(), "");
 }
 
-#[cfg(feature = "compress")]
+#[cfg(all(feature = "compress", feature = "util"))]
 #[test]
 fn compress_one_file_with_content() {
     let temp_dir = tempdir().unwrap();
@@ -46,7 +53,7 @@ fn compress_one_file_with_content() {
     );
 }
 
-#[cfg(feature = "compress")]
+#[cfg(all(feature = "compress", feature = "util"))]
 #[test]
 fn compress_empty_folder() {
     let temp_dir = tempdir().unwrap();
@@ -61,7 +68,7 @@ fn compress_empty_folder() {
     assert!(decompress_dest.read_dir().unwrap().next().is_none());
 }
 
-#[cfg(feature = "compress")]
+#[cfg(all(feature = "compress", feature = "util"))]
 #[test]
 fn compress_folder_with_one_file() {
     let temp_dir = tempdir().unwrap();
@@ -83,7 +90,7 @@ fn compress_folder_with_one_file() {
     );
 }
 
-#[cfg(feature = "compress")]
+#[cfg(all(feature = "compress", feature = "util"))]
 #[test]
 fn compress_folder_with_multi_file() {
     let temp_dir = tempdir().unwrap();
@@ -113,7 +120,7 @@ fn compress_folder_with_multi_file() {
     }
 }
 
-#[cfg(feature = "compress")]
+#[cfg(all(feature = "compress", feature = "util"))]
 #[test]
 fn compress_folder_with_nested_folder() {
     let temp_dir = tempdir().unwrap();
@@ -136,7 +143,7 @@ fn compress_folder_with_nested_folder() {
     );
 }
 
-#[cfg(all(feature = "compress", feature = "aes256"))]
+#[cfg(all(feature = "compress", feature = "util", feature = "aes256"))]
 #[test]
 fn compress_one_file_with_random_content_encrypted() {
     use rand::Rng;
@@ -166,7 +173,8 @@ fn compress_one_file_with_random_content_encrypted() {
     }
 }
 
-fn test_compression_method(methods: &[SevenZMethodConfiguration]) {
+#[cfg(all(feature = "compress", feature = "util"))]
+fn test_compression_method(methods: &[EncoderConfiguration]) {
     let mut content = Vec::new();
     File::open("tests/resources/decompress_x86.exe")
         .unwrap()
@@ -176,10 +184,10 @@ fn test_compression_method(methods: &[SevenZMethodConfiguration]) {
     let mut bytes = Vec::new();
 
     {
-        let mut writer = SevenZWriter::new(Cursor::new(&mut bytes)).unwrap();
+        let mut writer = ArchiveWriter::new(Cursor::new(&mut bytes)).unwrap();
 
-        let file = SevenZArchiveEntry::new_file("data/decompress_x86.exe");
-        let folder = SevenZArchiveEntry::new_folder("data");
+        let file = ArchiveEntry::new_file("data/decompress_x86.exe");
+        let folder = ArchiveEntry::new_folder("data");
 
         writer.set_content_methods(methods.to_vec());
         writer
@@ -191,7 +199,7 @@ fn test_compression_method(methods: &[SevenZMethodConfiguration]) {
 
     //std::fs::write("test.7z", bytes.as_slice()).unwrap();
 
-    let mut reader = SevenZReader::new(Cursor::new(bytes.as_slice()), Password::empty()).unwrap();
+    let mut reader = ArchiveReader::new(Cursor::new(bytes.as_slice()), Password::empty()).unwrap();
 
     assert_eq!(reader.archive().files.len(), 2);
 
@@ -201,7 +209,7 @@ fn test_compression_method(methods: &[SevenZMethodConfiguration]) {
         .iter()
         .filter(|file| !file.is_directory)
         .for_each(|file| {
-            let mut file_methods = Vec::<SevenZMethod>::new();
+            let mut file_methods = Vec::<EncoderMethod>::new();
             reader
                 .file_compression_methods(file.name(), &mut file_methods)
                 .expect("can't read compression method");
@@ -237,59 +245,59 @@ fn test_compression_method(methods: &[SevenZMethodConfiguration]) {
     assert_eq!(hash(&content), hash(&data));
 }
 
-#[cfg(feature = "compress")]
+#[cfg(all(feature = "compress", feature = "util"))]
 #[test]
 fn compress_with_copy_algorithm() {
-    test_compression_method(&[SevenZMethod::COPY.into()]);
+    test_compression_method(&[EncoderMethod::COPY.into()]);
 }
 
-#[cfg(feature = "compress")]
+#[cfg(all(feature = "compress", feature = "util"))]
 #[test]
 fn compress_with_delta_lzma_algorithm() {
     for i in 1..=4 {
         test_compression_method(&[
-            SevenZMethod::LZMA.into(),
+            EncoderMethod::LZMA.into(),
             DeltaOptions::from_distance(i).into(),
         ]);
     }
 }
 
-#[cfg(feature = "compress")]
+#[cfg(all(feature = "compress", feature = "util"))]
 #[test]
 fn compress_with_delta_lzma2_algorithm() {
     for i in 1..=4 {
         test_compression_method(&[
-            SevenZMethod::LZMA2.into(),
+            EncoderMethod::LZMA2.into(),
             DeltaOptions::from_distance(i).into(),
         ]);
     }
 }
 
-#[cfg(feature = "compress")]
+#[cfg(all(feature = "compress", feature = "util"))]
 #[test]
 fn compress_with_lzma_algorithm() {
-    test_compression_method(&[SevenZMethod::LZMA.into()]);
+    test_compression_method(&[EncoderMethod::LZMA.into()]);
 }
 
-#[cfg(feature = "compress")]
+#[cfg(all(feature = "compress", feature = "util"))]
 #[test]
 fn compress_with_lzma2_algorithm() {
-    test_compression_method(&[SevenZMethod::LZMA2.into()]);
+    test_compression_method(&[EncoderMethod::LZMA2.into()]);
 }
 
-#[cfg(feature = "ppmd")]
+#[cfg(all(feature = "compress", feature = "util", feature = "ppmd"))]
 #[test]
 fn compress_with_ppmd_algorithm() {
-    test_compression_method(&[SevenZMethod::PPMD.into()]);
+    test_compression_method(&[EncoderMethod::PPMD.into()]);
 }
 
-#[cfg(feature = "brotli")]
+#[cfg(all(feature = "compress", feature = "util", feature = "brotli"))]
 #[test]
 fn compress_with_brotli_standard_algorithm() {
     test_compression_method(&[BrotliOptions::default().with_skippable_frame_size(0).into()]);
 }
 
-#[cfg(feature = "brotli")]
+#[cfg(all(feature = "compress", feature = "util", feature = "brotli"))]
 #[test]
 fn compress_with_brotli_skippable_algorithm() {
     test_compression_method(&[BrotliOptions::default()
@@ -297,25 +305,25 @@ fn compress_with_brotli_skippable_algorithm() {
         .into()]);
 }
 
-#[cfg(feature = "bzip2")]
+#[cfg(all(feature = "compress", feature = "util", feature = "bzip2"))]
 #[test]
 fn compress_with_bzip2_algorithm() {
-    test_compression_method(&[SevenZMethod::BZIP2.into()]);
+    test_compression_method(&[EncoderMethod::BZIP2.into()]);
 }
 
-#[cfg(feature = "deflate")]
+#[cfg(all(feature = "compress", feature = "util", feature = "deflate"))]
 #[test]
 fn compress_with_deflate_algorithm() {
-    test_compression_method(&[SevenZMethod::DEFLATE.into()]);
+    test_compression_method(&[EncoderMethod::DEFLATE.into()]);
 }
 
-#[cfg(feature = "lz4")]
+#[cfg(all(feature = "compress", feature = "util", feature = "lz4"))]
 #[test]
 fn compress_with_lz4_algorithm() {
     test_compression_method(&[LZ4Options::default().with_skippable_frame_size(0).into()]);
 }
 
-#[cfg(feature = "lz4")]
+#[cfg(all(feature = "compress", feature = "util", feature = "lz4"))]
 #[test]
 fn compress_with_lz4_skippable_algorithm() {
     test_compression_method(&[LZ4Options::default()
@@ -323,8 +331,8 @@ fn compress_with_lz4_skippable_algorithm() {
         .into()]);
 }
 
-#[cfg(feature = "zstd")]
+#[cfg(all(feature = "compress", feature = "util", feature = "lz4"))]
 #[test]
 fn compress_with_zstd_algorithm() {
-    test_compression_method(&[SevenZMethod::ZSTD.into()]);
+    test_compression_method(&[EncoderMethod::ZSTD.into()]);
 }

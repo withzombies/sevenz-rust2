@@ -1,14 +1,19 @@
 use std::{io::Write, sync::Arc};
 
 use super::*;
-use crate::SevenZMethodConfiguration;
+use crate::EncoderConfiguration;
 #[derive(Debug, Clone, Default)]
-pub struct UnpackInfo {
-    pub folders: Vec<FolderInfo>,
+pub(crate) struct UnpackInfo {
+    pub(crate) folders: Vec<FolderInfo>,
 }
 
 impl UnpackInfo {
-    pub fn add(&mut self, methods: Arc<Vec<SevenZMethodConfiguration>>, sizes: Vec<u64>, crc: u32) {
+    pub(crate) fn add(
+        &mut self,
+        methods: Arc<Vec<EncoderConfiguration>>,
+        sizes: Vec<u64>,
+        crc: u32,
+    ) {
         self.folders.push(FolderInfo {
             methods,
             sizes,
@@ -18,9 +23,9 @@ impl UnpackInfo {
         })
     }
 
-    pub fn add_multiple(
+    pub(crate) fn add_multiple(
         &mut self,
-        methods: Arc<Vec<SevenZMethodConfiguration>>,
+        methods: Arc<Vec<EncoderConfiguration>>,
         sizes: Vec<u64>,
         crc: u32,
         num_sub_unpack_streams: u64,
@@ -37,7 +42,7 @@ impl UnpackInfo {
         })
     }
 
-    pub fn write_to<H: Write>(&mut self, header: &mut H) -> std::io::Result<()> {
+    pub(crate) fn write_to<H: Write>(&mut self, header: &mut H) -> std::io::Result<()> {
         header.write_u8(K_UNPACK_INFO)?;
         header.write_u8(K_FOLDER)?;
         write_u64(header, self.folders.len() as u64)?;
@@ -96,18 +101,21 @@ impl UnpackInfo {
 }
 
 #[derive(Debug, Clone, Default)]
-pub struct FolderInfo {
-    pub methods: Arc<Vec<SevenZMethodConfiguration>>,
-    // pub bind_pairs: Vec<BindPair>,
-    pub sizes: Vec<u64>,
-    pub crc: u32,
-    pub num_sub_unpack_streams: u64,
-    pub sub_stream_sizes: Vec<u64>,
-    pub sub_stream_crcs: Vec<u32>,
+pub(crate) struct FolderInfo {
+    pub(crate) methods: Arc<Vec<EncoderConfiguration>>,
+    pub(crate) sizes: Vec<u64>,
+    pub(crate) crc: u32,
+    pub(crate) num_sub_unpack_streams: u64,
+    pub(crate) sub_stream_sizes: Vec<u64>,
+    pub(crate) sub_stream_crcs: Vec<u32>,
 }
 
 impl FolderInfo {
-    pub fn write_to<W: Write>(&self, header: &mut W, cache: &mut Vec<u8>) -> std::io::Result<()> {
+    pub(crate) fn write_to<W: Write>(
+        &self,
+        header: &mut W,
+        cache: &mut Vec<u8>,
+    ) -> std::io::Result<()> {
         cache.clear();
         let mut num_coders = 0;
         for mc in self.methods.iter() {
@@ -125,12 +133,12 @@ impl FolderInfo {
 
     fn write_single_codec<H: Write>(
         &self,
-        mc: &SevenZMethodConfiguration,
+        mc: &EncoderConfiguration,
         out: &mut H,
     ) -> std::io::Result<()> {
         let id = mc.method.id();
         let mut temp = [0u8; 256];
-        let props = encoders::get_options_as_properties(mc.method, mc.options.as_ref(), &mut temp);
+        let props = encoder::get_options_as_properties(mc.method, mc.options.as_ref(), &mut temp);
         let mut codec_flags = id.len() as u8;
         if !props.is_empty() {
             codec_flags |= 0x20;
