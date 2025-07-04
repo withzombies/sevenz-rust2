@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## 0.16.0 - UNRELEASED
+## 0.16.0 - 2025-07-04
 
 ### Changed
 
@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - `SevenZMethodConfiguration` -> `EncoderConfiguration`
     - `MethodOptions` -> `EncoderOptions`
     - `Folder` -> `Block`
+- Renamed all instances of "folder" in the API to "directory" instead to clearly distinct from the "folder" in
+  the 7z format specification and align with the std fs module.
 - Internal `Archive`, `SteamMap`, `Coder` and `Block` fields are removed from the public API.
 - What the 7z specification calls "folders" are a false friend and we instead call them "blocks".
 - Every API that takes a password now uses the `Password` struct instead. Added helper

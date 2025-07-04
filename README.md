@@ -37,7 +37,7 @@ This is a fork of the original, unmaintained sevenz-rust crate to continue the d
 
 ```toml
 [dependencies]
-sevenz-rust2 = { version = "0.15" }
+sevenz-rust2 = { version = "0.16" }
 ```
 
 Decompress source file "data/sample.7z" to destination path "data/sample":
@@ -80,9 +80,9 @@ be decompressed.
 ```rust
 use sevenz_rust2::*;
 
-let mut sz = SevenZWriter::create("dest.7z").expect("create writer ok");
-sz.push_source_path("path/to/compress", | _ | true).expect("pack ok");
-sz.finish().expect("compress ok");
+let mut writer = ArchiveWriter::create("dest.7z").expect("create writer ok");
+writer.push_source_path("path/to/compress", | _ | true).expect("pack ok");
+writer.finish().expect("compress ok");
 ```
 
 #### Configure the compression methods
@@ -92,13 +92,13 @@ With encryption and lzma2 options:
 ```rust
 use sevenz_rust2::*;
 
-let mut sz = SevenZWriter::create("dest.7z").expect("create writer ok");
-sz.set_content_methods(vec![
-    sevenz_rust::AesEncoderOptions::new("sevenz-rust".into()).into(),
-    lzma::LZMA2Options::with_preset(9).into(),
+let mut writer = ArchiveWriter::create("dest.7z").expect("create writer ok");
+writer.set_content_methods(vec![
+    encoder_options::AesEncoderOptions::new("sevenz-rust".into()).into(),
+    encoder_options::LZMA2Options::with_preset(9).into(),
 ]);
-sz.push_source_path("path/to/compress", | _ | true).expect("pack ok");
-sz.finish().expect("compress ok");
+writer.push_source_path("path/to/compress", | _ | true).expect("pack ok");
+writer.finish().expect("compress ok");
 ```
 
 ### WASM support
