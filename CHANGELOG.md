@@ -32,6 +32,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed the dependency to `bit-set` and `filetime_creation`.
 - `nt-time` dependency is now optional.
 
+### Updated
+
+- PPMd crate to version v1.2, which fixes the compatibility issues with existing 7z files using PPMd7.
+
 ## 0.15.3 - 2025-06-28
 
 ### Fixed
