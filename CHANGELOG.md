@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.19.0 - Unreleased
+
+### Changed
+
+- Breaking change: Rename identifiers to follow Rust API Guidelines @sorairolake (#59)
+
+### Updated
+
+- Target lzma-rust2 v0.11.
+
+### Fixed
+
+- Improve docs.rs feature compatibility @sorairolake (#56)
+
 ## 0.18.0 - 2025-08-25
 
 ### Added
