@@ -1,3 +1,8 @@
+//! AES256-SHA256 encryption/decryption for 7z archives
+//! Vendored dependency - suppress deprecation warnings for generic-array usage
+
+#![allow(deprecated)]
+
 use std::io::{Read, Seek, Write};
 
 use aes::cipher::{BlockDecryptMut, BlockEncryptMut, KeyIvInit, generic_array::GenericArray};
