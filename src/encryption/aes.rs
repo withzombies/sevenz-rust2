@@ -1,3 +1,8 @@
+//! AES256-SHA256 encryption/decryption for 7z archives
+//! Vendored dependency - suppress deprecation warnings for generic-array usage
+
+#![allow(deprecated)]
+
 use std::{
     borrow::Cow,
     io::{Read, Seek, Write},
