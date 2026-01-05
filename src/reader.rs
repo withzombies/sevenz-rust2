@@ -1569,6 +1569,7 @@ impl<R: Read + Seek> ArchiveReader<R> {
         Ok(())
     }
 
+    /// Sets the password to use for decrypting encrypted archive entries.
     pub fn set_password(&mut self, password: Password) {
         self.password = password;
     }
