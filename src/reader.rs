@@ -1570,7 +1570,7 @@ impl<R: Read + Seek> ArchiveReader<R> {
     }
 
     pub fn set_password(&mut self, password: Password) {
-        self.password = password.to_vec();
+        self.password = password;
     }
 }
 
